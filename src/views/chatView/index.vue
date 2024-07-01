@@ -357,7 +357,9 @@
 </template>
 
 <script>
-import { images, chineseChars } from '@/utils/constans.js';
+import { images } from '@/utils/constans.js';
+import { EventStreamContentType, fetchEventSource } from '@microsoft/fetch-event-source';
+import { upload_answer } from '@/api/user';
 export default {
 	name: 'chat',
 	props: {
@@ -396,7 +398,8 @@ export default {
 					title: '帮助我进行学习',
 					description: '大学入学考试的词汇'
 				}
-			]
+			],
+			responseObj: {}
 		};
 	},
 	mounted() {
@@ -423,10 +426,10 @@ export default {
 						time: new Date().toLocaleString(),
 						finished: true
 					};
-					this.$emit('onAddMassage', newMessage);
+					this.$emit('onAddMessage', newMessage);
 					this.$emit('onStartChat', true);
 					this.resizeTextarea();
-					this.generateMessage();
+					this.generateMessage(msg ? msg : this.message);
 				} else {
 					this.finishd = true;
 				}
@@ -468,8 +471,7 @@ export default {
 			}
 		},
 		// 生成新消息
-		generateMessage() {
-			const message = this.randomChinese();
+		generateMessage(question) {
 			// 生成新消息
 			const newMessage = {
 				type: 'assistant',
@@ -479,39 +481,66 @@ export default {
 				time: new Date().toLocaleString(),
 				finished: false
 			};
-			this.$emit('onAddMassage', newMessage);
-			let index = this.messageList.length - 1;
-			this.changeMessageStatus(index).then((res) => {
-				// 循环，每次间隔1s，把字赋值给message，循环完成标记一下
-				let i = 0;
-				const timer = setInterval(() => {
-					if (i < message.length) {
-						this.messageList[index].message += message[i];
-						i++;
-					} else {
-						clearInterval(timer);
-						this.finishd = true;
-					}
-				}, 10);
-			});
+			this.$emit('onAddMessage', newMessage);
+			this.testMessageApi(question, this.messageList.length - 1);
 		},
-		// 生成随机1-100长度的中文字符串
-		randomChinese() {
-			let str = '';
-			for (let i = 0; i < Math.floor(Math.random() * 200 + 50); i++) {
-				str += chineseChars[Math.floor(Math.random() * chineseChars.length)];
-			}
-			str += '。';
-			return str;
+		testMessageApi(question, index) {
+			let _that = this;
+			console.log(this.getApiParams());
+			// let data = {
+			// 	question,
+			// 	kb_ids,
+			// 	history: [[]]
+			// };
+			// fetchEventSource('/api/chat/0', {
+			// 	method: 'POST',
+			// 	headers: {
+			// 		'Authori-zation': 'Bearer ' + localStorage.getItem('accessToken')
+			// 	},
+			// 	body: JSON.stringify(data),
+			// 	onopen(e) {
+			// 		console.log('打开');
+			// 		if (e.ok && e.headers.get('content-type').indexOf(EventStreamContentType) !== -1) {
+			// 			_that.messageList[index].finished = true;
+			// 		} else if (e.status !== 200) {
+			// 			throw new FatalError();
+			// 		} else {
+			// 			throw new RetriableError();
+			// 		}
+			// 	},
+			// 	onmessage(e) {
+			// 		if (e.event === 'message') {
+			// 			_that.messageList[index].message += JSON.parse(e.data.replace(/\\n\\n/gm, '<br>')).response;
+			// 		} else if (e.event === 'close') {
+			// 			_that.responseObj = JSON.parse(e.data);
+			// 		} else {
+			// 			console.log('其他data', e.data);
+			// 		}
+			// 	},
+			// 	async onclose(e) {
+			// 		console.log('关闭', _that.responseObj);
+			// 		let obj = {
+			// 			answer: _that.messageList[index].message,
+			// 			content_id: _that.responseObj.content_id
+			// 		};
+			// 		const { data } = await upload_answer(obj);
+			// 		console.log(data);
+			// 	},
+			// 	onerror(err) {
+			// 		console.log('onerror', err);
+			// 		throw err;
+			// 	}
+			// });
 		},
-		// 倒计时2s后改变消息状态
-		changeMessageStatus(index) {
-			return new Promise((resolve) => {
-				setTimeout(() => {
-					this.messageList[index].finished = true;
-					resolve();
-				}, 2000);
+		getApiParams() {
+			let kb_ids = this.maskList.map((item) => item.tag);
+			let history = this.messageList.map((item) => {
+				return [];
 			});
+			return {
+				kb_ids,
+				history
+			};
 		},
 		chooseTip(item) {
 			this.sendMessage(item.title);

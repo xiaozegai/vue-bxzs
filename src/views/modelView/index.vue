@@ -20,13 +20,13 @@
 								<div
 									class="imgDefault rounded-full"
 									:style="{
-										'background-image': `url(${maskList[maskIndex].avatar})`
+										'background-image': `url(${maskList[maskIndex]?.avatar})`
 									}"></div>
 							</div>
 						</div>
 						<div class="wlecome mt-2 mb-5 text-2xl text-gray-800 dark:text-gray-100 font-normal">
 							<div class="line-clamp-1">你好，{{ $store.state.user.real_name || '用户名' }}</div>
-							<div>{{ '我是  ' + maskList[maskIndex].tag }}</div>
+							<div>{{ '我是  ' + maskList[maskIndex]?.name }}</div>
 						</div>
 					</div>
 				</div>
@@ -328,7 +328,8 @@
 </template>
 
 <script>
-import { images, chineseChars } from '@/utils/constans.js';
+import { images } from '@/utils/constans.js';
+import { fetchEventSource } from '@microsoft/fetch-event-source';
 export default {
 	name: 'chat',
 	props: {
@@ -447,7 +448,6 @@ export default {
 		},
 		// 生成新消息
 		generateMessage() {
-			const message = this.randomChinese();
 			// 生成新消息
 			const newMessage = {
 				type: 'assistant',
@@ -458,37 +458,29 @@ export default {
 				finished: false
 			};
 			this.messageList.push(newMessage);
-			let index = this.messageList.length - 1;
-			this.changeMessageStatus(index).then((res) => {
-				// 循环，每次间隔1s，把字赋值给message，循环完成标记一下
-				let i = 0;
-				const timer = setInterval(() => {
-					if (i < message.length) {
-						this.messageList[index].message += message[i];
-						i++;
+			this.testMessageApi(this.messageList.length - 1);
+		},
+		testMessageApi(index) {
+			let _that = this;
+			fetchEventSource('/api/test', {
+				method: 'GET',
+				onopen(e) {
+					console.log('打开');
+					_that.messageList[index].finished = true;
+				},
+				onmessage(e) {
+					if (e.event === 'message') {
+						_that.messageList[index].message += e.data;
 					} else {
-						clearInterval(timer);
-						this.finishd = true;
+						console.log('其他data', e.data);
 					}
-				}, 10);
-			});
-		},
-		// 生成随机1-100长度的中文字符串
-		randomChinese() {
-			let str = '';
-			for (let i = 0; i < Math.floor(Math.random() * 200 + 50); i++) {
-				str += chineseChars[Math.floor(Math.random() * chineseChars.length)];
-			}
-			str += '。';
-			return str;
-		},
-		// 倒计时2s后改变消息状态
-		changeMessageStatus(index) {
-			return new Promise((resolve) => {
-				setTimeout(() => {
-					this.messageList[index].finished = true;
-					resolve();
-				}, 2000);
+				},
+				onclose(e) {
+					console.log('关闭');
+				},
+				onerror(err) {
+					throw err;
+				}
 			});
 		},
 		chooseTip(item) {

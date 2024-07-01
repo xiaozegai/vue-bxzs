@@ -190,7 +190,7 @@
 			:startChat="startChat"
 			@onStartChat="onStartChat"
 			:messageList="messageList"
-			@onAddMassage="onAddMassage" />
+			@onAddMessage="onAddMessage" />
 		<!-- 关闭 - 开启 -->
 		<div id="tippy-6" :class="{ tippyVisible: sidebarToggle, tippyMove: !sidebarOpen }">
 			<div class="tippy-box">
@@ -204,7 +204,7 @@ import src1 from '../../assets/image/mask-1.webp';
 import src2 from '../../assets/image/mask-2.webp';
 import src3 from '../../assets/image/mask-3.webp';
 import src4 from '../../assets/image/default.svg';
-import { user_logout } from '@/api/user';
+import { user_logout, get_kb_ids } from '@/api/user';
 import Cookies from 'js-cookie';
 
 import { fetchEventSource } from '@microsoft/fetch-event-source';
@@ -216,38 +216,7 @@ export default {
 		return {
 			sidebarToggle: false,
 			sidebarOpen: true,
-			maskList: [
-				{
-					id: 'qiowrqsasdasd',
-					name: '工业互联网迭代器',
-					tag: '工业互联网助手',
-					avatar: src1
-				},
-				{
-					id: 'nasbdhasjkdba',
-					name: '高数高手',
-					tag: '高等数学高手',
-					avatar: src2
-				},
-				{
-					id: 'abdaaAnaklsdn',
-					name: '博弈大师',
-					tag: '精通博弈策略的讲师',
-					avatar: src3
-				},
-				{
-					id: 'abdaaAnaklsdn',
-					name: '财务办事指南',
-					tag: '财务办事指南',
-					avatar: src4
-				},
-				{
-					id: 'abdaaAnaklsdn',
-					name: '茶文化专家',
-					tag: '茶文化知识库大模型',
-					avatar: src4
-				}
-			],
+			maskList: [],
 			maskIndex: 0,
 			sessionList: [],
 			startChat: false,
@@ -271,8 +240,24 @@ export default {
 		sidebarToggleButton.addEventListener('mouseleave', () => {
 			this.sidebarToggle = false;
 		});
+		// 初始化
+		this.init();
 	},
 	methods: {
+		async init() {
+			const { data } = await get_kb_ids();
+			if (data.status === 200) {
+				Object.keys(data.data).forEach((key) => {
+					let item = {
+						id: key,
+						name: key,
+						tag: data.data[key],
+						avatar: src4
+					};
+					this.maskList.push(item);
+				});
+			}
+		},
 		handleSetLanguage(lang) {
 			this.$i18n.locale = lang; //也可以放在store中操作
 			this.$store.dispatch('setLanguage', lang);
@@ -323,7 +308,7 @@ export default {
 				this.messageList = [];
 			}
 		},
-		onAddMassage(message) {
+		onAddMessage(message) {
 			this.messageList.push(message);
 		},
 		test() {
