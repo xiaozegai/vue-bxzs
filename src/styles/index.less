@@ -1,0 +1,38 @@
+* {
+	padding: 0;
+	margin: 0;
+}
+
+body {
+	font-family: PingFang SC, serif;
+}
+/*滚动条样式*/
+::-webkit-scrollbar {
+	height: 0.4rem;
+	width: 0.4rem;
+}
+/*定义滚动条轨道*/
+::-webkit-scrollbar-track {
+	background-color: transparent;
+	border-radius: 9999px;
+}
+/*定义滑块*/
+::-webkit-scrollbar-thumb {
+	--tw-border-opacity: 1;
+	background-color: #d9d9e3cc;
+	border-color: rgba(255, 255, 255, var(--tw-border-opacity));
+	border-radius: 9999px;
+	border-width: 1px;
+}
+
+// /*去掉下拉框-选项下边距*/
+// .el-select-dropdown,
+// .el-cascader__dropdown {
+// 	.el-scrollbar {
+// 		.el-select-dropdown__wrap.el-scrollbar__wrap,
+// 		.el-cascader-menu__wrap.el-scrollbar__wrap {
+// 			height: fit-content;
+// 			overflow: auto !important;
+// 		}
+// 	}
+// }
