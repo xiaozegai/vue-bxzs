@@ -32,3 +32,13 @@ export const get_kb_ids = async () => {
 export const upload_answer = async (data) => {
 	return await request(`/answer`, { method: 'POST', data });
 };
+
+// 问答列表 /chat_list 分页参数 page limit
+export const get_chat_list = async (page, limit) => {
+	return await request(`/chat_list?page=${page}&limit=${limit}`);
+};
+
+// 问答详情 /chat_detail/{id}
+export const get_chat_detail = async (id) => {
+	return await request(`/chat_detail/${id}`);
+};

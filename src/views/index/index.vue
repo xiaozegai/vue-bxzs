@@ -80,24 +80,24 @@
 							</div>
 						</div>
 					</div>
-					<div class="pl-2 my-2 flex-1 flex flex-col space-y-1 overflow-y-auto">
+					<div id="session-box" class="pl-2 my-2 flex-1 flex flex-col space-y-1 overflow-y-auto">
 						<div
 							class="chatBox pr-2 relative group"
 							v-for="(item, index) of sessionList"
 							:key="index"
-							@click="chooseSession(item.id)">
+							@click="chooseSession(item)">
 							<div class="chatContainer">
 								<div aria-label="小家园（默认）" class="flex">
 									<div
 										class="avatar imgDefault"
 										:style="{
-											'background-image': `url(${item.avatar})`
+											'background-image': item.avatar ? `url(${item.avatar})` : `url(${src4})`
 										}"></div>
 								</div>
 								<div class="name flex justify-between rounded-xl py-2 cursor-pointer" draggable="false">
 									<div class="flex self-center flex-1 w-full">
 										<div class="font-semibold text-left self-center overflow-hidden w-full h-[20px]">
-											{{ item.title }}
+											{{ `"${item.title}"` }}
 										</div>
 									</div>
 								</div>
@@ -133,12 +133,6 @@
 					</div>
 				</div>
 				<div class="user-center px-2.5">
-					<div class="flex flex-col mb-4" @click="test">
-						<div
-							class="flex rounded-xl py-3 px-3.5 w-full bg-miku-mediumLight_hover self-center font-semibold cursor-pointer">
-							测试会话
-						</div>
-					</div>
 					<div class="flex flex-col mb-4" @click="logout">
 						<div
 							class="flex rounded-xl py-3 px-3.5 w-full bg-miku-mediumLight_hover self-center font-semibold cursor-pointer">
@@ -190,7 +184,9 @@
 			:startChat="startChat"
 			@onStartChat="onStartChat"
 			:messageList="messageList"
-			@onAddMessage="onAddMessage" />
+			@onAddMessage="onAddMessage"
+			:responseObj="responseObj"
+			@updateResponseObj="updateResponseObj" />
 		<!-- 关闭 - 开启 -->
 		<div id="tippy-6" :class="{ tippyVisible: sidebarToggle, tippyMove: !sidebarOpen }">
 			<div class="tippy-box">
@@ -204,7 +200,7 @@ import src1 from '../../assets/image/mask-1.webp';
 import src2 from '../../assets/image/mask-2.webp';
 import src3 from '../../assets/image/mask-3.webp';
 import src4 from '../../assets/image/default.svg';
-import { user_logout, get_kb_ids } from '@/api/user';
+import { user_logout, get_kb_ids, get_chat_list, get_chat_detail } from '@/api/user';
 import Cookies from 'js-cookie';
 
 import { fetchEventSource } from '@microsoft/fetch-event-source';
@@ -220,7 +216,12 @@ export default {
 			maskIndex: 0,
 			sessionList: [],
 			startChat: false,
-			messageList: []
+			messageList: [],
+			responseObj: {},
+			src4,
+			// 分页
+			page: 1,
+			limit: 20
 		};
 	},
 	created() {},
@@ -240,24 +241,54 @@ export default {
 		sidebarToggleButton.addEventListener('mouseleave', () => {
 			this.sidebarToggle = false;
 		});
+		// localStorage.getItem('sidebarOpen')转为boolean
+		this.sidebarOpen = JSON.parse(localStorage.getItem('sidebarOpen'));
 		// 初始化
 		this.init();
+		// 判断sessionBox是否滚动到底部
+		const sessionBox = document.getElementById('session-box');
+		sessionBox.addEventListener('scroll', () => {
+			if (sessionBox.scrollHeight - sessionBox.scrollTop === sessionBox.clientHeight) {
+				console.log('滚动到底部');
+				this.page++;
+				this.getChatListApi();
+			}
+		});
 	},
 	methods: {
-		async init() {
+		init() {
+			this.getKbIdsApi();
+			this.getChatListApi();
+		},
+		async getKbIdsApi() {
 			const { data } = await get_kb_ids();
 			if (data.status === 200) {
 				Object.keys(data.data).forEach((key) => {
-					let item = {
-						id: key,
-						name: key,
-						tag: data.data[key],
-						avatar: src4
-					};
-					this.maskList.push(item);
+					if (key && data.data[key]) {
+						let item = {
+							id: key,
+							name: this.$t(key),
+							tag: this.$t(`${key}_text`),
+							uuid: data.data[key],
+							avatar: src4
+						};
+						this.maskList.push(item);
+					}
 				});
 			}
 		},
+		async getChatListApi() {
+			const { data } = await get_chat_list(this.page, this.limit);
+			if (data.status === 200) {
+				// let data = data.data; // data.data.count 条数
+				if (data.data.list.length > 0) {
+					this.sessionList = [...this.sessionList, ...data.data.list];
+				} else {
+					this.page--;
+				}
+			}
+		},
+		// 切换语言
 		handleSetLanguage(lang) {
 			this.$i18n.locale = lang; //也可以放在store中操作
 			this.$store.dispatch('setLanguage', lang);
@@ -276,8 +307,7 @@ export default {
 			}
 		},
 		chooseMask(index, isRouter) {
-			this.startChat = false;
-			this.messageList = [];
+			this.resetValue();
 			this.maskIndex = index;
 			if (isRouter || this.$route.path !== '/') {
 				this.$router.push({ path: `/model` });
@@ -285,21 +315,66 @@ export default {
 		},
 		sidebarClick() {
 			this.sidebarOpen = !this.sidebarOpen;
+			localStorage.setItem('sidebarOpen', this.sidebarOpen);
 		},
 		goMoveMask() {
 			this.$router.push({ path: '/collection' });
 		},
 		newChat() {
-			this.startChat = false;
-			this.messageList = [];
+			this.resetValue();
 			this.$router.push({ path: `/chat` });
 		},
-		chooseSession(id) {
-			this.$router.push({ path: `/${id}` });
+		async chooseSession(session) {
+			this.resetValue(true);
+			if (session.kb_type === 'all') {
+				this.$router.push({ path: `/chat` });
+			} else {
+				// 遍历this.maskList,找出id === kb_type
+				let index = this.maskList.findIndex((item) => item.id === session.kb_type);
+				this.maskIndex = index;
+				this.$router.push({ path: `/model` });
+			}
+			const { data } = await get_chat_detail(session.id);
+			if (data.status === 200) {
+				this.startChat = true;
+				this.generateMessageList(data.data.contents);
+			}
+		},
+		// 通过contents获取对话内容，设置messageList
+		generateMessageList(contents) {
+			console.log(contents);
+			const _that = this;
+			// 遍历contents，每一条对应两条messageList，分别是question和answer
+			contents.forEach((item) => {
+				let question = {
+					type: 'question',
+					avatar: _that.$store.state.user.avatar,
+					name: '你',
+					message: item.question,
+					time: item.create_time_text,
+					finished: true
+				};
+				let answer = {
+					type: 'answer',
+					avatar: src4,
+					name: '报销助手',
+					message: item.answer,
+					time: item.create_time_text,
+					finished: true
+				};
+				_that.messageList.push(...[question, answer]);
+			});
+
+			console.log(this.messageList);
+		},
+		resetValue(bool) {
+			if (!bool) this.startChat = false;
+			this.messageList = [];
+			this.responseObj = {};
 		},
 		// 新增会话
 		addTip(item) {
-			this.sessionList.push(item);
+			this.sessionList.unshift(item);
 		},
 		// 开始聊天事件
 		onStartChat(bool) {
@@ -311,50 +386,11 @@ export default {
 		onAddMessage(message) {
 			this.messageList.push(message);
 		},
-		test() {
-			// eventstream 流式获取数据
-			let accessToken = localStorage.getItem('accessToken');
-			let data = {
-				question: '南昌大学是啥',
-				history: [[]]
-			};
-			// const eventSource = fetchEventSource('/api/chat/0', {
-			// 	method: 'POST',
-			// 	headers: {
-			// 		'Authori-zation': 'Bearer ' + accessToken
-			// 	},
-			// 	body: data,
-			// 	onopen(e) {
-			// 		console.log('打开', e);
-			// 	},
-			// 	onmessage(e) {
-			// 		console.log(e);
-			// 	},
-			// 	onclose(e) {
-			// 		console.log('关闭', e);
-			// 	},
-			// 	onerror(err) {
-			// 		throw err;
-			// 	}
-			// });
-
-			const eventSource = fetchEventSource('/api/test', {
-				method: 'GET',
-				onopen(e) {
-					console.log('打开');
-				},
-				onmessage(e) {
-					console.log(e.data);
-				},
-				onclose(e) {
-					console.log('关闭');
-				},
-				onerror(err) {
-					throw err;
-				}
-			});
+		updateResponseObj(obj) {
+			this.responseObj = obj;
 		}
-	}
+	},
+	beforeDestroy() {}
 };
 </script>
 <style lang="less" scoped>

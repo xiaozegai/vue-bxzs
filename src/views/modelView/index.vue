@@ -26,7 +26,7 @@
 						</div>
 						<div class="wlecome mt-2 mb-5 text-2xl text-gray-800 dark:text-gray-100 font-normal">
 							<div class="line-clamp-1">你好，{{ $store.state.user.real_name || '用户名' }}</div>
-							<div>{{ '我是  ' + maskList[maskIndex]?.name }}</div>
+							<div v-if="maskList[maskIndex]?.name">{{ '我是  ' + maskList[maskIndex]?.tag + '小助手' }}</div>
 						</div>
 					</div>
 				</div>
@@ -329,7 +329,8 @@
 
 <script>
 import { images } from '@/utils/constans.js';
-import { fetchEventSource } from '@microsoft/fetch-event-source';
+import { EventStreamContentType, fetchEventSource } from '@microsoft/fetch-event-source';
+import { upload_answer } from '@/api/user';
 export default {
 	name: 'chat',
 	props: {
@@ -348,11 +349,16 @@ export default {
 		messageList: {
 			type: Array,
 			default: () => []
+		},
+		responseObj: {
+			type: Object,
+			default: () => {}
 		}
 	},
 	data() {
 		return {
 			textareaDom: null,
+			messagesContainer: null,
 			message: '',
 			finishd: true,
 			tipList: [
@@ -378,6 +384,7 @@ export default {
 	created() {},
 	mounted() {
 		this.textareaDom = document.getElementById('chat-textarea');
+		this.messagesContainer = document.getElementById('messages-container');
 	},
 	computed: {},
 	methods: {
@@ -392,17 +399,18 @@ export default {
 				this.isFirstMessage(msg);
 				// 添加消息
 				if (this.message !== '' || msg) {
-					this.messageList.push({
-						type: 'user',
-						avatar: this.getAvatarSrc('user'),
+					let newMessage = {
+						type: 'question',
+						avatar: this.getAvatarSrc('question'),
 						name: '你',
 						message: msg ? msg : this.message,
 						time: new Date().toLocaleString(),
 						finished: true
-					});
+					};
+					this.$emit('onAddMessage', newMessage);
 					this.$emit('onStartChat', true);
 					this.resizeTextarea();
-					this.generateMessage();
+					this.generateMessage(msg ? msg : this.message);
 				} else {
 					this.finishd = true;
 				}
@@ -414,7 +422,7 @@ export default {
 			}
 		},
 		getAvatarSrc(type) {
-			return type === 'user' ? images[0] : this.maskList[this.maskIndex].avatar;
+			return type === 'question' ? images[0] : this.maskList[this.maskIndex].avatar;
 		},
 		getTitile() {
 			return this.maskList[this.maskIndex].name;
@@ -447,70 +455,101 @@ export default {
 			}
 		},
 		// 生成新消息
-		generateMessage() {
+		generateMessage(question) {
 			// 生成新消息
 			const newMessage = {
-				type: 'assistant',
-				avatar: this.getAvatarSrc('assistant'),
+				type: 'answer',
+				avatar: this.getAvatarSrc('answer'),
 				name: this.getTitile(),
 				message: '',
 				time: new Date().toLocaleString(),
 				finished: false
 			};
-			this.messageList.push(newMessage);
-			this.testMessageApi(this.messageList.length - 1);
+			this.$emit('onAddMessage', newMessage);
+			this.sendMessageApi(question, this.messageList.length - 1);
 		},
-		testMessageApi(index) {
-			let _that = this;
-			fetchEventSource('/api/test', {
-				method: 'GET',
+		sendMessageApi(question, index) {
+			// 让messagesContainer滚动到最下面
+			this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+			let { kb_ids, history, session_id } = this.getApiParams(),
+				_that = this;
+			let data = {
+				question,
+				kb_ids,
+				history
+			};
+			fetchEventSource(`/api/chat/${session_id}`, {
+				method: 'POST',
+				headers: {
+					'Authori-zation': 'Bearer ' + localStorage.getItem('accessToken')
+				},
+				body: JSON.stringify(data),
 				onopen(e) {
 					console.log('打开');
-					_that.messageList[index].finished = true;
+					if (e.ok && e.headers.get('content-type').indexOf(EventStreamContentType) !== -1) {
+						_that.messageList[index].finished = true;
+					} else if (e.status !== 200) {
+						throw new FatalError();
+					} else {
+						throw new RetriableError();
+					}
 				},
 				onmessage(e) {
 					if (e.event === 'message') {
-						_that.messageList[index].message += e.data;
+						_that.messageList[index].message += JSON.parse(e.data.replace(/\\n\\n/gm, '<br>')).response;
+						// _that.messageList[index].message += JSON.parse(e.data).response;
+					} else if (e.event === 'close') {
+						// _that.responseObj = JSON.parse(e.data);
+						_that.$emit('updateResponseObj', JSON.parse(e.data));
 					} else {
 						console.log('其他data', e.data);
 					}
+					// 让messagesContainer滚动到最下面
+					_that.messagesContainer.scrollTop = _that.messagesContainer.scrollHeight;
 				},
-				onclose(e) {
-					console.log('关闭');
+				async onclose(e) {
+					console.log('关闭', _that.responseObj);
+					_that.finishd = true; // 重置状态
+					let obj = {
+						answer: _that.messageList[index].message,
+						content_id: _that.responseObj.content_id
+					};
+					const { data } = await upload_answer(obj);
+					if (data.status === 200) {
+					}
 				},
 				onerror(err) {
+					console.log('onerror', err);
 					throw err;
 				}
 			});
 		},
-		chooseTip(item) {
-			this.maskIndex = -1;
-			this.sendMessage(item.title);
+		// 获取历史消息等参数
+		getApiParams() {
+			let kb_ids = [this.maskList[this.maskIndex].uuid];
+			// 取出messageList中的每一条消息的message，基数为问题，偶数为回答，将其拼接成一个数组，格式为[[问题，回答]，[问题，答案]，...]
+			let history = [],
+				messageList = this.messageList.slice(0, this.messageList.length - 2); // this.messageList去掉最后一组消息，因为最后一条消息是正在输入的消息，不需要传给后端
+			for (let i = 0; i < messageList.length; i += 2) {
+				history.push([messageList[i].message, messageList[i + 1].message]);
+			}
+			let session_id = this.responseObj?.session_id ? this.responseObj.session_id : 0;
+			return {
+				kb_ids,
+				history,
+				session_id
+			};
 		},
 		// 判断是否为第一条消息，是-则为新会话，通知父组件
 		isFirstMessage(msg) {
-			let id = this.generateId();
 			if (this.messageList.length === 0) {
 				this.$emit('firstMessage', {
-					id: id,
-					title: `"${msg}"`,
-					avatar: this.getAvatarSrc('assistant'),
-					link: `/chat/${id}`
+					id: '',
+					title: `${msg}`,
+					avatar: this.getAvatarSrc('answer')
+					// link: `/chat/${id}`
 				});
 			}
-		},
-		// 生成id
-		generateId() {
-			let str = 'a-';
-			let str2 = '-';
-			for (let i = 0; i < 4; i++) {
-				// 当最后一次的时候
-				if (i === 3) {
-					str2 = '';
-				}
-				str += Math.floor(Math.random() * 10) + str2;
-			}
-			return str;
 		}
 	}
 };

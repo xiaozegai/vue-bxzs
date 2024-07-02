@@ -73,14 +73,24 @@
 											</div>
 										</div>
 										<!-- 回答内容 -->
-										<div
-											v-else
-											class="prose chat-user w-full max-w-full dark:prose-invert prose-headings:my-0 prose-p:my-0 prose-p:-mb-4 prose-pre:my-0 prose-table:my-0 prose-blockquote:my-0 prose-img:my-0 prose-ul:-my-4 prose-ol:-my-4 prose-li:-my-3 prose-ul:-mb-6 prose-ol:-mb-6 prose-li:-mb-4 whitespace-pre-line">
+										<div v-else class="prose chat-user w-full max-w-full whitespace-pre-line">
 											<div class="w-full">
 												<pre v-if="item.type === 'user'" id="user-message" style="font-family: 'PingFang SC', serif">{{
 													item.message
 												}}</pre>
-												<p v-else>{{ item.message }}</p>
+												<!-- <p v-else>{{ item.message }}</p> -->
+												<vue-markdown v-else :source="item.message">
+													<template v-slot:pre="">
+														<p>这是一个自定义的前置处理。</p>
+													</template>
+													<template v-slot:code="props">
+														<pre :class="'language-' + props.language">{{ props.code }}</pre>
+													</template>
+													<template v-slot:blockquote="">
+														<blockquote>{{ props.content }}</blockquote>
+													</template>
+												</vue-markdown>
+
 												<div class="flex justify-start space-x-1 text-gray-700 dark:text-gray-500">
 													<div aria-label="编辑" class="flex">
 														<button
@@ -357,11 +367,15 @@
 </template>
 
 <script>
+import VueMarkdown from 'vue-markdown';
 import { images } from '@/utils/constans.js';
 import { EventStreamContentType, fetchEventSource } from '@microsoft/fetch-event-source';
 import { upload_answer } from '@/api/user';
 export default {
 	name: 'chat',
+	components: {
+		'vue-markdown': VueMarkdown
+	},
 	props: {
 		maskList: {
 			type: Array,
@@ -374,36 +388,33 @@ export default {
 		messageList: {
 			type: Array,
 			default: () => []
+		},
+		responseObj: {
+			type: Object,
+			default: () => {}
 		}
 	},
 	data() {
 		return {
 			textareaDom: null,
+			messagesContainer: null,
 			message: '',
 			finishd: true,
 			tipList: [
 				{
-					title: '告诉我一个有趣的事实',
-					description: '关于罗马帝国'
+					title: '科研经费报销流程',
+					description: '科研经费报销'
 				},
 				{
-					title: '给我一些想法',
-					description: '如何处理我的孩子的艺术品'
-				},
-				{
-					title: '展示一个网站的代码片段',
-					description: '关于网站的固定标题'
-				},
-				{
-					title: '帮助我进行学习',
-					description: '大学入学考试的词汇'
+					title: '如何报销经费',
+					description: '如何报销？？'
 				}
-			],
-			responseObj: {}
+			]
 		};
 	},
 	mounted() {
 		this.textareaDom = document.getElementById('chat-textarea');
+		this.messagesContainer = document.getElementById('messages-container');
 	},
 	computed: {},
 	methods: {
@@ -419,8 +430,8 @@ export default {
 				// 添加消息
 				if (this.message !== '' || msg) {
 					let newMessage = {
-						type: 'user',
-						avatar: this.getAvatarSrc('user'),
+						type: 'question',
+						avatar: this.getAvatarSrc('question'),
 						name: '你',
 						message: msg ? msg : this.message,
 						time: new Date().toLocaleString(),
@@ -441,7 +452,7 @@ export default {
 			}
 		},
 		getAvatarSrc(type) {
-			return type === 'user' ? images[0] : images[1];
+			return type === 'question' ? images[0] : images[1];
 		},
 		checkFile() {
 			const fileInput = document.querySelector('input[type="file"]');
@@ -474,101 +485,102 @@ export default {
 		generateMessage(question) {
 			// 生成新消息
 			const newMessage = {
-				type: 'assistant',
-				avatar: this.getAvatarSrc('assistant'),
-				name: '小家园（默认）',
+				type: 'answer',
+				avatar: this.getAvatarSrc('answer'),
+				name: '报销助手',
 				message: '',
 				time: new Date().toLocaleString(),
 				finished: false
 			};
 			this.$emit('onAddMessage', newMessage);
-			this.testMessageApi(question, this.messageList.length - 1);
+			this.sendMessageApi(question, this.messageList.length - 1);
 		},
-		testMessageApi(question, index) {
-			let _that = this;
-			console.log(this.getApiParams());
-			// let data = {
-			// 	question,
-			// 	kb_ids,
-			// 	history: [[]]
-			// };
-			// fetchEventSource('/api/chat/0', {
-			// 	method: 'POST',
-			// 	headers: {
-			// 		'Authori-zation': 'Bearer ' + localStorage.getItem('accessToken')
-			// 	},
-			// 	body: JSON.stringify(data),
-			// 	onopen(e) {
-			// 		console.log('打开');
-			// 		if (e.ok && e.headers.get('content-type').indexOf(EventStreamContentType) !== -1) {
-			// 			_that.messageList[index].finished = true;
-			// 		} else if (e.status !== 200) {
-			// 			throw new FatalError();
-			// 		} else {
-			// 			throw new RetriableError();
-			// 		}
-			// 	},
-			// 	onmessage(e) {
-			// 		if (e.event === 'message') {
-			// 			_that.messageList[index].message += JSON.parse(e.data.replace(/\\n\\n/gm, '<br>')).response;
-			// 		} else if (e.event === 'close') {
-			// 			_that.responseObj = JSON.parse(e.data);
-			// 		} else {
-			// 			console.log('其他data', e.data);
-			// 		}
-			// 	},
-			// 	async onclose(e) {
-			// 		console.log('关闭', _that.responseObj);
-			// 		let obj = {
-			// 			answer: _that.messageList[index].message,
-			// 			content_id: _that.responseObj.content_id
-			// 		};
-			// 		const { data } = await upload_answer(obj);
-			// 		console.log(data);
-			// 	},
-			// 	onerror(err) {
-			// 		console.log('onerror', err);
-			// 		throw err;
-			// 	}
-			// });
-		},
-		getApiParams() {
-			let kb_ids = this.maskList.map((item) => item.tag);
-			let history = this.messageList.map((item) => {
-				return [];
-			});
-			return {
+		sendMessageApi(question, index) {
+			// 让messagesContainer滚动到最下面
+			this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+			let { kb_ids, history, session_id } = this.getApiParams(),
+				_that = this;
+			let data = {
+				question,
 				kb_ids,
 				history
 			};
+			fetchEventSource(`/api/chat/${session_id}`, {
+				method: 'POST',
+				headers: {
+					'Authori-zation': 'Bearer ' + localStorage.getItem('accessToken')
+				},
+				body: JSON.stringify(data),
+				onopen(e) {
+					console.log('打开');
+					if (e.ok && e.headers.get('content-type').indexOf(EventStreamContentType) !== -1) {
+						_that.messageList[index].finished = true;
+					} else if (e.status !== 200) {
+						throw new FatalError();
+					} else {
+						throw new RetriableError();
+					}
+				},
+				onmessage(e) {
+					if (e.event === 'message') {
+						_that.messageList[index].message += JSON.parse(e.data.replace(/\\n\\n/gm, '<br>')).response;
+						// _that.messageList[index].message += JSON.parse(e.data).response;
+					} else if (e.event === 'close') {
+						// _that.responseObj = JSON.parse(e.data);
+						_that.$emit('updateResponseObj', JSON.parse(e.data));
+					} else {
+						console.log('其他data', e.data);
+					}
+					// 让messagesContainer滚动到最下面
+					_that.messagesContainer.scrollTop = _that.messagesContainer.scrollHeight;
+				},
+				async onclose(e) {
+					console.log('关闭', _that.responseObj);
+					_that.finishd = true; // 重置状态
+					let obj = {
+						answer: _that.messageList[index].message,
+						content_id: _that.responseObj.content_id
+					};
+					const { data } = await upload_answer(obj);
+					if (data.status === 200) {
+					}
+				},
+				onerror(err) {
+					console.log('onerror', err);
+					throw err;
+				}
+			});
+		},
+		// 获取历史消息等参数
+		getApiParams() {
+			let kb_ids = this.maskList.map((item) => item.uuid);
+			// 取出messageList中的每一条消息的message，基数为问题，偶数为回答，将其拼接成一个数组，格式为[[问题，回答]，[问题，答案]，...]
+			let history = [],
+				messageList = this.messageList.slice(0, this.messageList.length - 2); // this.messageList去掉最后一组消息，因为最后一条消息是正在输入的消息，不需要传给后端
+			for (let i = 0; i < messageList.length; i += 2) {
+				history.push([messageList[i].message, messageList[i + 1].message]);
+			}
+			let session_id = this.responseObj?.session_id ? this.responseObj.session_id : 0;
+			return {
+				kb_ids,
+				history,
+				session_id
+			};
 		},
 		chooseTip(item) {
+			this.$emit('updateResponseObj', {});
 			this.sendMessage(item.title);
 		},
 		// 判断是否为第一条消息，是-则为新会话，通知父组件
 		isFirstMessage(msg) {
-			let id = this.generateId();
 			if (this.messageList.length === 0) {
 				this.$emit('firstMessage', {
-					id: id,
-					title: `"${msg}"`,
-					avatar: this.getAvatarSrc('assistant'),
-					link: `/chat/${id}`
+					id: '',
+					title: `${msg}`,
+					avatar: this.getAvatarSrc('answer')
+					// link: `/chat/${id}`
 				});
 			}
-		},
-		// 生成id
-		generateId() {
-			let str = 'a-';
-			let str2 = '-';
-			for (let i = 0; i < 4; i++) {
-				// 当最后一次的时候
-				if (i === 3) {
-					str2 = '';
-				}
-				str += Math.floor(Math.random() * 10) + str2;
-			}
-			return str;
 		},
 		clearView() {
 			this.$emit('onStartChat', false);
