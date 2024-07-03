@@ -240,7 +240,10 @@ export default {
 			this.sidebarToggle = false;
 		});
 		// localStorage.getItem('sidebarOpen')转为boolean
-		this.sidebarOpen = JSON.parse(localStorage.getItem('sidebarOpen'));
+		let localSidebarOpen = localStorage.getItem('sidebarOpen');
+		if (localSidebarOpen !== null) {
+			this.sidebarOpen = JSON.parse(localSidebarOpen);
+		}
 		// 初始化
 		this.init();
 		// 判断sessionBox是否滚动到底部
