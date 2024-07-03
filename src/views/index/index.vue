@@ -20,8 +20,8 @@
 						alt="with"
 						draggable="false" />
 					<img
-						src="../../assets/image/NCUHOME.svg"
-						alt="NCUHOME"
+						src="../../assets/image/logo1.png"
+						alt="logo1"
 						class="rounded-full dark:border-none logo imgDefault"
 						draggable="false" />
 				</div>
@@ -41,7 +41,7 @@
 				<div class="box">
 					<div class="container maskBlock">
 						<button class="moreMasksContainer" @click="goMoveMask">
-							<div class="text">更多角色</div>
+							<div class="text">更多知识库</div>
 							<div class="icon imgDefault"></div>
 						</button>
 						<div class="masksContainer">
@@ -85,9 +85,9 @@
 							class="chatBox pr-2 relative group"
 							v-for="(item, index) of sessionList"
 							:key="index"
-							@click="chooseSession(item)">
-							<div class="chatContainer">
-								<div aria-label="小家园（默认）" class="flex">
+							@click="chooseSession(item, index)">
+							<div class="chatContainer" :class="currentSessionIndex === index ? 'light' : ''">
+								<div class="flex">
 									<div
 										class="avatar imgDefault"
 										:style="{
@@ -133,22 +133,21 @@
 					</div>
 				</div>
 				<div class="user-center px-2.5">
-					<div class="flex flex-col mb-4" @click="logout">
-						<div
-							class="flex rounded-xl py-3 px-3.5 w-full bg-miku-mediumLight_hover self-center font-semibold cursor-pointer">
-							退出登录
-						</div>
-					</div>
 					<div class="flex flex-col">
 						<button
-							class="flex rounded-xl py-3 px-3.5 w-full bg-miku-mediumLight_hover dark:hover:bg-gray-900 transition">
+							class="flex justify-between rounded-xl py-3 px-3.5 w-full bg-miku-mediumLight_hover dark:hover:bg-gray-900 transition">
 							<div class="self-center mr-3">
 								<img
 									:src="$store.state.user.avatar"
 									class="max-w-[30px] object-cover rounded-full"
 									alt="User profile" />
 							</div>
-							<div class="self-center font-semibold">{{ $store.state.user.real_name || '用户名' }}</div>
+							<div class="flex-1 self-center text-left font-semibold">{{ $store.state.user.nickname || '用户名' }}</div>
+							<div
+								class="logout mr-3 p-2 self-center font-semibold rounded-xl border-1 border-blue-300 bg-blue-50"
+								@click="logout">
+								退出登录
+							</div>
 						</button>
 					</div>
 				</div>
@@ -199,11 +198,9 @@
 import src1 from '../../assets/image/mask-1.webp';
 import src2 from '../../assets/image/mask-2.webp';
 import src3 from '../../assets/image/mask-3.webp';
-import src4 from '../../assets/image/default.svg';
+import src4 from '../../assets/image/logo1.png';
 import { user_logout, get_kb_ids, get_chat_list, get_chat_detail } from '@/api/user';
 import Cookies from 'js-cookie';
-
-import { fetchEventSource } from '@microsoft/fetch-event-source';
 
 export default {
 	name: 'homeIndex',
@@ -215,6 +212,7 @@ export default {
 			maskList: [],
 			maskIndex: 0,
 			sessionList: [],
+			currentSessionIndex: -1,
 			startChat: false,
 			messageList: [],
 			responseObj: {},
@@ -258,7 +256,13 @@ export default {
 	methods: {
 		init() {
 			this.getKbIdsApi();
-			this.getChatListApi();
+			let currentSessionIndex = localStorage.getItem('currentSessionIndex');
+			if (currentSessionIndex !== undefined || currentSessionIndex !== null) {
+				this.currentSessionIndex = parseInt(currentSessionIndex);
+				this.getChatListApi(true, this.currentSessionIndex);
+			} else {
+				this.getChatListApi();
+			}
 		},
 		async getKbIdsApi() {
 			const { data } = await get_kb_ids();
@@ -277,7 +281,7 @@ export default {
 				});
 			}
 		},
-		async getChatListApi() {
+		async getChatListApi(bool, index) {
 			const { data } = await get_chat_list(this.page, this.limit);
 			if (data.status === 200) {
 				// let data = data.data; // data.data.count 条数
@@ -286,6 +290,18 @@ export default {
 				} else {
 					this.page--;
 				}
+			}
+			if (bool && this.sessionList.length) {
+				this.getChatDetailApi(this.sessionList[index].id);
+			}
+		},
+		async getChatDetailApi(sessionId) {
+			if (!sessionId) return;
+			const { data } = await get_chat_detail(sessionId);
+			if (data.status === 200) {
+				this.startChat = true;
+				this.responseObj.session_id = data.data.id;
+				this.generateMessageList(data.data.contents);
 			}
 		},
 		// 切换语言
@@ -298,7 +314,9 @@ export default {
 		async logout() {
 			const { data } = await user_logout();
 			if (data.status === 200) {
+				this.$message.success(data.msg);
 				localStorage.removeItem('accessToken');
+				localStorage.removeItem('currentSessionIndex');
 				this.$router.push({ path: '/login' });
 				this.$store.commit('logout');
 			} else {
@@ -324,7 +342,10 @@ export default {
 			this.resetValue();
 			this.$router.push({ path: `/chat` });
 		},
-		async chooseSession(session) {
+		async chooseSession(session, currentIndex) {
+			if (this.currentSessionIndex === currentIndex && this.$route.path === '/chat') return;
+			this.currentSessionIndex = currentIndex;
+			localStorage.setItem('currentSessionIndex', currentIndex);
 			this.resetValue(true);
 			if (session.kb_type === 'all') {
 				this.$router.push({ path: `/chat` });
@@ -334,15 +355,10 @@ export default {
 				this.maskIndex = index;
 				this.$router.push({ path: `/model` });
 			}
-			const { data } = await get_chat_detail(session.id);
-			if (data.status === 200) {
-				this.startChat = true;
-				this.generateMessageList(data.data.contents);
-			}
+			this.getChatDetailApi(session.id);
 		},
 		// 通过contents获取对话内容，设置messageList
 		generateMessageList(contents) {
-			console.log(contents);
 			const _that = this;
 			// 遍历contents，每一条对应两条messageList，分别是question和answer
 			contents.forEach((item) => {
@@ -364,8 +380,6 @@ export default {
 				};
 				_that.messageList.push(...[question, answer]);
 			});
-
-			console.log(this.messageList);
 		},
 		resetValue(bool) {
 			if (!bool) this.startChat = false;
@@ -388,6 +402,7 @@ export default {
 		},
 		updateResponseObj(obj) {
 			this.responseObj = obj;
+			this.$set(this.messageList[this.messageList.length - 1], 'sourceList', obj.data.slice(0, 3));
 		}
 	},
 	beforeDestroy() {}
@@ -587,6 +602,9 @@ export default {
 			&:hover {
 				background-color: #f4fafc;
 			}
+			&.light {
+				background-color: #eaf8fd;
+			}
 			.avatar {
 				border-radius: 50%;
 				width: 1.8rem;
@@ -605,6 +623,12 @@ export default {
 		.bg-miku-mediumLight_hover {
 			&:hover {
 				background-color: #eaf8fd;
+			}
+			.logout {
+				transition: box-shadow linear 0.2s;
+			}
+			&:hover .logout {
+				box-shadow: 0 0 0 2px #39c5bb;
 			}
 		}
 	}

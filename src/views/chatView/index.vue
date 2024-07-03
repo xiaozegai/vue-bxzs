@@ -1,7 +1,7 @@
 <template>
 	<div class="h-screen max-h-[100dvh] w-full flex flex-col">
 		<nav id="nav" class="sticky py-2.5 top-0 justify-center z-30">
-			<div class="logo"></div>
+			<div class="logo">LOGO</div>
 			<div class="settings" @click="clearView">
 				<button class="img cursor-pointer flex dark:hover:bg-gray-700 rounded-full transition"></button>
 				<div slot="content" class="container" style="position: absolute; left: calc(24rem + 50vw); top: 10vh"></div>
@@ -21,7 +21,7 @@
 							</div>
 						</div>
 						<div class="wlecome mt-2 mb-5 text-2xl text-gray-800 dark:text-gray-100 font-normal">
-							<div class="line-clamp-1">你好，{{ $store.state.user.real_name || '用户名' }}</div>
+							<div class="line-clamp-1">你好，{{ $store.state.user.nickname || '用户名' }}</div>
 							<div>有什么可以帮到你的吗？</div>
 						</div>
 					</div>
@@ -74,25 +74,33 @@
 										</div>
 										<!-- 回答内容 -->
 										<div v-else class="prose chat-user w-full max-w-full whitespace-pre-line">
-											<div class="w-full">
-												<pre v-if="item.type === 'user'" id="user-message" style="font-family: 'PingFang SC', serif">{{
-													item.message
-												}}</pre>
-												<!-- <p v-else>{{ item.message }}</p> -->
-												<vue-markdown v-else :source="item.message">
-													<template v-slot:pre="">
-														<p>这是一个自定义的前置处理。</p>
+											<div class="w-full py-2">
+												<pre
+													v-if="item.type === 'question'"
+													id="user-message"
+													style="font-family: 'PingFang SC', serif"
+													>{{ item.message }}</pre
+												>
+												<template v-if="item.type === 'answer'">
+													<p v-if="!item.message" class="text-gray-700 text-xl">空</p>
+													<vue-markdown v-else :source="item.message"></vue-markdown>
+												</template>
+												<!-- 来源-按钮 -->
+												<div
+													v-if="item.type === 'answer' && item.finished && item.sourceList?.length"
+													class="source-box w-full my-2 flex gap-10">
+													<template v-for="(sourceItem, sourceIndex) of item.sourceList">
+														<el-tooltip effect="light" :content="sourceItem.file_name" placement="top">
+															<div class="source px-4 py-1 border-2 rounded-lg cursor-pointer hover:underline">
+																<!-- <el-link>{{ sourceItem.file_name }}</el-link> -->
+																<el-link>{{ '答案来源' + (sourceIndex + 1) }}</el-link>
+															</div>
+														</el-tooltip>
 													</template>
-													<template v-slot:code="props">
-														<pre :class="'language-' + props.language">{{ props.code }}</pre>
-													</template>
-													<template v-slot:blockquote="">
-														<blockquote>{{ props.content }}</blockquote>
-													</template>
-												</vue-markdown>
-
+												</div>
+												<!-- 复制-按钮 -->
 												<div class="flex justify-start space-x-1 text-gray-700 dark:text-gray-500">
-													<div aria-label="编辑" class="flex">
+													<!-- <div aria-label="编辑" class="flex">
 														<button
 															class="invisible group-hover:visible p-1 rounded dark:hover:text-white hover:text-black transition edit-user-message-button">
 															<svg
@@ -108,8 +116,8 @@
 																	d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"></path>
 															</svg>
 														</button>
-													</div>
-													<div aria-label="复制" class="flex">
+													</div> -->
+													<div aria-label="复制" class="flex" @click="copyCode(item)">
 														<button
 															class="invisible group-hover:visible p-1 rounded dark:hover:text-white hover:text-black transition">
 															<svg
@@ -126,7 +134,7 @@
 															</svg>
 														</button>
 													</div>
-													<template v-if="item.type !== 'user'">
+													<!-- <template v-if="item.type !== 'user'">
 														<div aria-label="赞" class="flex">
 															<button
 																class="invisible group-hover:visible p-1 rounded dark:hover:text-white hover:text-black transition">
@@ -237,7 +245,7 @@
 																</svg>
 															</button>
 														</div>
-													</template>
+													</template> -->
 												</div>
 											</div>
 										</div>
@@ -354,9 +362,9 @@
 							</form>
 							<div class="mt-1.5 text-xs text-gray-500 text-center about">
 								Powered by
-								<a href="" target="_blank" class="link underline">南昌大学人工智能工业研究院</a>
+								<a href="" target="_blank" class="link underline">xxxxx</a>
 								&amp;
-								<a href="https://team.ncuos.com/" target="_blank" class="link underline">南昌大学家园工作室</a>
+								<a href="https://team.ncuos.com/" target="_blank" class="link underline">xxxxx</a>
 							</div>
 						</div>
 					</div>
@@ -367,10 +375,10 @@
 </template>
 
 <script>
-import VueMarkdown from 'vue-markdown';
 import { images } from '@/utils/constans.js';
 import { EventStreamContentType, fetchEventSource } from '@microsoft/fetch-event-source';
 import { upload_answer } from '@/api/user';
+import VueMarkdown from 'vue-markdown';
 export default {
 	name: 'chat',
 	components: {
@@ -561,6 +569,11 @@ export default {
 				history.push([messageList[i].message, messageList[i + 1].message]);
 			}
 			let session_id = this.responseObj?.session_id ? this.responseObj.session_id : 0;
+			history.push(['', '']);
+			if (history.length >= 6) {
+				// history只保留后两条消息
+				history = history.slice(history.length - 6, history.length);
+			}
 			return {
 				kb_ids,
 				history,
@@ -584,6 +597,16 @@ export default {
 		},
 		clearView() {
 			this.$emit('onStartChat', false);
+		},
+		copyCode(item) {
+			// '复制', item.message
+			window.navigator.clipboard.writeText(item.message).then(() => {
+				this.$message({
+					message: '复制成功',
+					type: 'success',
+					duration: 800
+				});
+			});
 		}
 	}
 };
@@ -595,7 +618,9 @@ export default {
 	height: 10vh;
 	padding-left: 15vw;
 	.logo {
-		background-image: url('../../assets/image/Hollama.svg');
+		// background-image: url('../../assets/image/Hollama.svg');
+		font-size: 40px;
+		font-weight: 800;
 		position: absolute;
 		left: calc(50% - 23.375rem);
 		margin-top: 3vh;
@@ -625,7 +650,7 @@ export default {
 		width: 3.5rem;
 		height: 3.5rem;
 		border-radius: 9999px;
-		background-image: url(/src/assets/image/default.svg);
+		background-image: url(/src/assets/image/logo1.png);
 		background-repeat: no-repeat;
 		background-position: center;
 		background-size: cover;
@@ -636,6 +661,15 @@ export default {
 			display: -webkit-box;
 			-webkit-box-orient: vertical;
 			-webkit-line-clamp: 1;
+		}
+	}
+	.prose {
+		.source-box {
+			.source {
+				border-radius: 0.5rem;
+				background-color: #f4fafc;
+				border-color: rgb(127, 220, 212);
+			}
 		}
 	}
 }

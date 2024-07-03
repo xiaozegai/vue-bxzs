@@ -11,7 +11,7 @@
 					<form class="flex flex-col justify-center bg-white py-6 sm:py-16 px-6 sm:px-16 rounded-2xl">
 						<div class="text-xl sm:text-2xl font-bold">
 							{{ titleText }}
-							<div class="">logo</div>
+							<div class="logo"></div>
 						</div>
 						<div class="mt-1 text-xs font-medium text-gray-500">
 							ⓘ NCU xxx 不进行任何外部连接，您的数据安全地存储在您的本地服务器上。
@@ -22,10 +22,10 @@
 								<input
 									type="text"
 									class="border px-4 py-2.5 rounded-2xl w-full text-sm"
-									autocomplete="name"
+									autocomplete="nickname"
 									placeholder="输入您的全名"
 									required=""
-									v-model="form.username" />
+									v-model="form.nickname" />
 								<hr class="my-3" />
 							</template>
 							<div class="mb-2">
@@ -33,7 +33,7 @@
 								<input
 									type="email"
 									class="border px-4 py-2.5 rounded-2xl w-full text-sm"
-									autocomplete="email"
+									autocomplete="account"
 									placeholder="输入您的电子邮件"
 									required=""
 									v-model="form.account" />
@@ -44,7 +44,7 @@
 									type="password"
 									class="border px-4 py-2.5 rounded-2xl w-full text-sm"
 									placeholder="输入您的密码"
-									autocomplete="current-password"
+									autocomplete="password"
 									required=""
 									v-model="form.password" />
 							</div>
@@ -67,7 +67,7 @@
 			<div class="footerContainer absolute bottom-2">
 				<div class="mt-1.5 text-xs text-gray-500 text-center about">
 					Powered by
-					<a href="" target="_blank" class="link underline">南昌大学人工智能工业研究院</a>
+					<a href="" target="_blank" class="link underline">xxxxx</a>
 					&amp;
 					<a href="" target="_blank" class="link underline">xxxxx</a>
 				</div>
@@ -85,9 +85,9 @@ export default {
 		return {
 			toggleType: 1, // 1: 登录 2: 注册
 			form: {
-				username: '',
-				account: '2205017186@qq.com',
-				password: '1234567'
+				nickname: '',
+				account: '',
+				password: ''
 			}
 		};
 	},
@@ -112,13 +112,28 @@ export default {
 			this.toggleType = this.toggleType === 1 ? 2 : 1;
 		},
 		verify() {
+			let accountReg = /^([a-zA-Z0-9_-])+@([a-zA-Z0-9_-])+(.[a-zA-Z0-9_-])+$/; // 邮箱正则
+			// let passwordReg = /^(?![0-9]+$)(?![a-zA-Z]+$)[0-9A-Za-z]{6,20}$/; // 密码正则
+			let passwordReg1 = /^[0-9]{6,20}$/; // 密码正则 数字，最低6位
+			let nicknameReg = /^[\u4e00-\u9fa5_a-zA-Z0-9_]{2,10}$/; // 昵称正则
 			if (this.toggleType === 1) {
-				if (this.form.account === '' || this.form.password === '') {
+				if (this.form.account === '' || accountReg.test(this.form.account) === false) {
+					this.$message.error('账号格式错误，不能为空且必须为邮箱格式');
+					return false;
+				} else if (this.form.password === '' || passwordReg1.test(this.form.password) === false) {
+					this.$message.error('密码格式错误，不能为空且必须为6-20位数字');
 					return false;
 				}
 				return true;
 			} else {
-				if (this.form.username === '' || this.form.account === '' || this.form.password === '') {
+				if (this.form.nickname === '' || nicknameReg.test(this.form.nickname) === false) {
+					this.$message.error('昵称格式错误，不能为空且必须为2-10位中文、英文、数字');
+					return false;
+				} else if (this.form.account === '' || accountReg.test(this.form.account) === false) {
+					this.$message.error('账号格式错误，不能为空且必须为邮箱格式');
+					return false;
+				} else if (this.form.password === '' || passwordReg1.test(this.form.password) === false) {
+					this.$message.error('密码格式错误，不能为空且必须为6-20位数字');
 					return false;
 				}
 				return true;
@@ -142,10 +157,11 @@ export default {
 				let accessToken = data.data.token; //从后台返回的token
 				localStorage.setItem('accessToken', accessToken); // 用localStorage缓存token值
 				this.$message.success('登录成功');
+				this.resetForm();
 				this.$router.push({ path: '/' });
 				this.getUserInfo();
 			} else {
-				this.$message.error('登录失败');
+				this.$message.error(data.data.message);
 			}
 		},
 		// 获取用户信息
@@ -154,20 +170,24 @@ export default {
 			if (data.status === 200) {
 				this.$store.commit('login', { user: data.data });
 			}
-			console.log(data.data);
-			// this.$store.commit('login', { user: { id: 1, name: '殷南通' } });
 		},
 		// 注册事件
 		async register() {
 			const { data } = await user_register(this.form);
-			console.log(data);
-			// this.$message.success('注册成功');
-			// this.toggleType = 1;
-			// this.form = {
-			// 	username: '',
-			// 	account: '',
-			// 	password: ''
-			// };
+			if (data.status === 200) {
+				this.$message.success('注册成功');
+				this.login();
+			} else {
+				this.$message.error(data.msg);
+			}
+			this.resetForm();
+		},
+		resetForm() {
+			this.form = {
+				nickname: '',
+				account: '',
+				password: ''
+			};
 		}
 	}
 };
@@ -176,5 +196,16 @@ export default {
 <style lang="less" scoped>
 .view-container {
 	width: 100vw;
+	.logo {
+		display: inline-block;
+		vertical-align: middle;
+		height: 2.5rem;
+		aspect-ratio: 1 / 1;
+		border-radius: 50%;
+		background-image: url('../../assets/image/logo1.png');
+		background-repeat: no-repeat;
+		background-position: center;
+		background-size: cover;
+	}
 }
 </style>

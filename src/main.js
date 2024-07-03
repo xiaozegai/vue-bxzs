@@ -8,8 +8,8 @@ import i18n from './lang/index'; // 国际化
 import './styles/index.less'; // global css
 import 'virtual:windi.css';
 import VWave from 'v-wave';
-import JsonExcel from 'vue-json-excel'; // 导出excel
-Vue.component('downloadExcel', JsonExcel);
+// import JsonExcel from 'vue-json-excel'; // 导出excel
+// Vue.component('downloadExcel', JsonExcel);
 
 //全局挂载
 import Lodash from 'lodash';
@@ -26,9 +26,9 @@ onAfterResponse((response) => {
 	if (data.message) {
 		Notification.closeAll();
 		Notification({
-			type: data.success ? 'success' : 'error',
-			title: data.success ? '操作成功' : '操作失败',
-			message: data.message
+			type: data.status === 200 ? 'success' : 'error',
+			title: data.status ? '操作成功' : '操作失败',
+			message: data.message || data.msg
 		});
 	}
 });
@@ -42,20 +42,46 @@ onHttpError(({ status, message, data }) => {
 	});
 });
 
-// 使用 nprogress 作为请求进度提示
-import nprogress from 'nprogress';
-// 进度条样式
-import 'nprogress/nprogress.css';
+// // 使用 nprogress 作为请求进度提示
+// import nprogress from 'nprogress';
+// // 进度条样式
+// import 'nprogress/nprogress.css';
 
-onBeforeRequest(() => nprogress.start());
-onAfterResponse(() => nprogress.done());
-onHttpError(() => nprogress.done());
+// onBeforeRequest(() => nprogress.start());
+// onAfterResponse(() => nprogress.done());
+// onHttpError(() => nprogress.done());
+
+// v-md-editor 不用了
+// import VueMarkdownEditor from '@kangc/v-md-editor';
+// import '@kangc/v-md-editor/lib/style/base-editor.css';
+// import vuepressTheme from '@kangc/v-md-editor/lib/theme/vuepress.js';
+// import '@kangc/v-md-editor/lib/theme/style/vuepress.css';
+// import Prism from 'prismjs';
+// // 这是预览时引用的
+// import VMdPreview from '@kangc/v-md-editor/lib/preview';
+// import '@kangc/v-md-editor/lib/style/preview.css';
+// // 引入你所使用的主题 此处以 github 主题为例
+// import githubTheme from '@kangc/v-md-editor/lib/theme/github';
+// import '@kangc/v-md-editor/lib/theme/style/github.css';
+// // highlightjs
+// import hljs from 'highlight.js';
+// //预览的主题
+// VMdPreview.use(githubTheme, {
+// 	Hljs: hljs
+// });
+// //编辑器的主题
+// VueMarkdownEditor.use(vuepressTheme, {
+// 	Prism
+// });
 
 Vue.use(Element, { i18n: (key, value) => i18n.t(key, value) }).use(VWave);
+// .use(VueMarkdownEditor)
+// .use(VMdPreview);
 new Vue({
 	el: '#app',
 	router,
 	store,
 	i18n,
+
 	render: (h) => h(App)
 });

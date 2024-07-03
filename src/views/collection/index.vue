@@ -2,7 +2,7 @@
 	<div class="min-h-screen max-h-[100dvh] w-full flex justify-center dark:text-white">
 		<div class="flex flex-col justify-between w-full overflow-y-auto">
 			<div class="max-w-2xl mx-auto w-full px-3 md:px-0 my-10">
-				<div class="text-2xl font-semibold mb-3">全部角色</div>
+				<div class="text-2xl font-semibold mb-3">全部知识库</div>
 				<div class="my-2 mb-5">
 					<div
 						class="flex space-x-4 cursor-pointer w-full px-3 py-2 dark:hover:bg-white/5 hover:bg-black/5 rounded-xl"

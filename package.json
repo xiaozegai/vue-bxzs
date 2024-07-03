@@ -11,6 +11,7 @@
     "preview": "vite preview --port 3334 --open"
   },
   "dependencies": {
+    "@kangc/v-md-editor": "^1.7.12",
     "@microsoft/fetch-event-source": "^2.0.1",
     "@tinymce/tinymce-vue": "^3.0.1",
     "axios": "^1.3.5",
