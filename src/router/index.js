@@ -22,7 +22,7 @@ Vue.use(Router);
  */
 
 const router = new Router({
-	mode: 'history', // 去掉url中的#
+	mode: 'hash', // 路由模式
 	scrollBehavior: () => ({ y: 0 }),
 	base: '/',
 	// 定义路由与组件的映射关系
