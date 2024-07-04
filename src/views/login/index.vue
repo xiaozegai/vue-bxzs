@@ -113,15 +113,14 @@ export default {
 		},
 		verify() {
 			let accountReg = /^([a-zA-Z0-9_-])+@([a-zA-Z0-9_-])+(.[a-zA-Z0-9_-])+$/; // 邮箱正则
-			// let passwordReg = /^(?![0-9]+$)(?![a-zA-Z]+$)[0-9A-Za-z]{6,20}$/; // 密码正则
-			let passwordReg1 = /^[0-9]{6,20}$/; // 密码正则 数字，最低6位
+			let passwordReg = /^(?![0-9]+$)(?![a-zA-Z]+$)[0-9A-Za-z]{6,20}$/; // 密码正则
 			let nicknameReg = /^[\u4e00-\u9fa5_a-zA-Z0-9_]{2,10}$/; // 昵称正则
 			if (this.toggleType === 1) {
 				if (this.form.account === '' || accountReg.test(this.form.account) === false) {
 					this.$message.error('账号格式错误，不能为空且必须为邮箱格式');
 					return false;
-				} else if (this.form.password === '' || passwordReg1.test(this.form.password) === false) {
-					this.$message.error('密码格式错误，不能为空且必须为6-20位数字');
+				} else if (this.form.password === '' || passwordReg.test(this.form.password) === false) {
+					this.$message.error('密码格式错误，不能为空且必须为6-20位字母和数字组合');
 					return false;
 				}
 				return true;
@@ -132,8 +131,8 @@ export default {
 				} else if (this.form.account === '' || accountReg.test(this.form.account) === false) {
 					this.$message.error('账号格式错误，不能为空且必须为邮箱格式');
 					return false;
-				} else if (this.form.password === '' || passwordReg1.test(this.form.password) === false) {
-					this.$message.error('密码格式错误，不能为空且必须为6-20位数字');
+				} else if (this.form.password === '' || passwordReg.test(this.form.password) === false) {
+					this.$message.error('密码格式错误，不能为空且必须为6-20位字母和数字组合');
 					return false;
 				}
 				return true;
@@ -177,10 +176,10 @@ export default {
 			if (data.status === 200) {
 				this.$message.success('注册成功');
 				this.login();
+				this.resetForm();
 			} else {
 				this.$message.error(data.msg);
 			}
-			this.resetForm();
 		},
 		resetForm() {
 			this.form = {

@@ -1,12 +1,6 @@
 <template>
 	<div class="h-screen max-h-[100dvh] w-full flex flex-col">
-		<nav id="nav" class="sticky py-2.5 top-0 justify-center z-30">
-			<div class="logo">LOGO</div>
-			<div class="settings" @click="clearView">
-				<button class="img cursor-pointer flex dark:hover:bg-gray-700 rounded-full transition"></button>
-				<div slot="content" class="container" style="position: absolute; left: calc(24rem + 50vw); top: 10vh"></div>
-			</div>
-		</nav>
+		<hander-nav></hander-nav>
 		<div class="flex flex-col flex-auto">
 			<!-- 消息框--未开始 -->
 			<div
@@ -88,15 +82,17 @@
 												<!-- 来源-按钮 -->
 												<div
 													v-if="item.type === 'answer' && item.finished && item.sourceList?.length"
-													class="source-box w-full my-2 flex gap-10">
-													<template v-for="(sourceItem, sourceIndex) of item.sourceList">
-														<el-tooltip effect="light" :content="sourceItem.file_name" placement="top">
-															<div class="source px-4 py-1 border-2 rounded-lg cursor-pointer hover:underline">
-																<!-- <el-link>{{ sourceItem.file_name }}</el-link> -->
-																<el-link>{{ '答案来源' + (sourceIndex + 1) }}</el-link>
-															</div>
-														</el-tooltip>
-													</template>
+													class="source-box w-full my-2">
+													<div>答案来源</div>
+													<div class="flex gap-10">
+														<template v-for="(sourceItem, sourceIndex) of item.sourceList">
+															<el-tooltip effect="light" :content="sourceItem.content" placement="top">
+																<div class="source px-4 py-1 border-2 rounded-lg cursor-pointer hover:underline">
+																	<el-link>{{ sourceItem.file_name }}</el-link>
+																</div>
+															</el-tooltip>
+														</template>
+													</div>
 												</div>
 												<!-- 复制-按钮 -->
 												<div class="flex justify-start space-x-1 text-gray-700 dark:text-gray-500">
@@ -379,9 +375,11 @@ import { images } from '@/utils/constans.js';
 import { EventStreamContentType, fetchEventSource } from '@microsoft/fetch-event-source';
 import { upload_answer } from '@/api/user';
 import VueMarkdown from 'vue-markdown';
+import handerNav from '../components/handerNav.vue';
 export default {
 	name: 'chat',
 	components: {
+		handerNav,
 		'vue-markdown': VueMarkdown
 	},
 	props: {
@@ -595,9 +593,6 @@ export default {
 				});
 			}
 		},
-		clearView() {
-			this.$emit('onStartChat', false);
-		},
 		copyCode(item) {
 			// '复制', item.message
 			window.navigator.clipboard.writeText(item.message).then(() => {
@@ -613,38 +608,6 @@ export default {
 </script>
 
 <style lang="less" scoped>
-#nav {
-	background: rgb(255, 255, 255);
-	height: 10vh;
-	padding-left: 15vw;
-	.logo {
-		// background-image: url('../../assets/image/Hollama.svg');
-		font-size: 40px;
-		font-weight: 800;
-		position: absolute;
-		left: calc(50% - 23.375rem);
-		margin-top: 3vh;
-		height: 3rem;
-		aspect-ratio: 3 / 1;
-		background-repeat: no-repeat;
-		background-position: center;
-		background-size: cover;
-	}
-	.settings {
-		position: absolute;
-		left: calc(50% + 24rem);
-		margin-top: 3vh;
-		.img {
-			background-image: url('../../assets/image/chatSettings.svg');
-			width: 1.5rem;
-			height: 1.5rem;
-			&:hover {
-				background-color: #eaf8fd;
-			}
-		}
-	}
-}
-
 #messages-container {
 	.imgDefault {
 		width: 3.5rem;

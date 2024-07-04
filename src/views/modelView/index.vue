@@ -1,12 +1,6 @@
 <template>
 	<div class="h-screen max-h-[100dvh] w-full flex flex-col">
-		<nav id="nav" class="sticky py-2.5 top-0 justify-center z-30">
-			<div class="logo">LOGO</div>
-			<div class="settings">
-				<button class="img cursor-pointer flex dark:hover:bg-gray-700 rounded-full transition"></button>
-				<div slot="content" class="container" style="position: absolute; left: calc(24rem + 50vw); top: 10vh"></div>
-			</div>
-		</nav>
+		<hander-nav></hander-nav>
 		<div class="flex flex-col flex-auto">
 			<!-- 消息框--未开始 -->
 			<div
@@ -350,11 +344,10 @@ import { images } from '@/utils/constans.js';
 import { EventStreamContentType, fetchEventSource } from '@microsoft/fetch-event-source';
 import { upload_answer } from '@/api/user';
 import VueMarkdown from 'vue-markdown';
+import handerNav from '../components/handerNav.vue';
 export default {
 	name: 'modelChat',
-	components: {
-		'vue-markdown': VueMarkdown
-	},
+	components: { handerNav, 'vue-markdown': VueMarkdown },
 	props: {
 		maskList: {
 			type: Array,

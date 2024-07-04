@@ -154,7 +154,7 @@
 			</div>
 			<div
 				class="sidebar-toggle fixed left-0 top-[50dvh] transform -translate-y-1/2 transition-transform translate-x-[19.5rem] md:translate-x-[20rem] rotate-0">
-				<div aria-label="关闭 侧边栏" class="flex">
+				<div aria-label="关闭-打开 侧边栏" class="flex">
 					<button id="sidebar-toggle-button" class="group" @click="sidebarClick">
 						<span class="" data-state="closed">
 							<div
@@ -691,6 +691,10 @@ export default {
 	transform: translate(362px, 470px);
 	transition-property: transform, visibility, opacity;
 	transition-duration: 10ms;
+	@media (max-width: 640px) {
+		display: none;
+		opacity: 0;
+	}
 	.tippy-box {
 		max-width: 350px;
 		position: relative;
