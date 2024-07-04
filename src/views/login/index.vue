@@ -113,14 +113,14 @@ export default {
 		},
 		verify() {
 			let accountReg = /^([a-zA-Z0-9_-])+@([a-zA-Z0-9_-])+(.[a-zA-Z0-9_-])+$/; // 邮箱正则
-			let passwordReg = /^(?![0-9]+$)(?![a-zA-Z]+$)[0-9A-Za-z]{6,20}$/; // 密码正则
+			let psdLength = this.form.password.length;
 			let nicknameReg = /^[\u4e00-\u9fa5_a-zA-Z0-9_]{2,10}$/; // 昵称正则
 			if (this.toggleType === 1) {
 				if (this.form.account === '' || accountReg.test(this.form.account) === false) {
 					this.$message.error('账号格式错误，不能为空且必须为邮箱格式');
 					return false;
-				} else if (this.form.password === '' || passwordReg.test(this.form.password) === false) {
-					this.$message.error('密码格式错误，不能为空且必须为6-20位字母和数字组合');
+				} else if (this.form.password === '' || (psdLength >= 6 && psdLength <= 20)) {
+					this.$message.error('密码格式错误，不能为空且必须为6-20位长度');
 					return false;
 				}
 				return true;
@@ -131,8 +131,8 @@ export default {
 				} else if (this.form.account === '' || accountReg.test(this.form.account) === false) {
 					this.$message.error('账号格式错误，不能为空且必须为邮箱格式');
 					return false;
-				} else if (this.form.password === '' || passwordReg.test(this.form.password) === false) {
-					this.$message.error('密码格式错误，不能为空且必须为6-20位字母和数字组合');
+				} else if (this.form.password === '' || (psdLength >= 6 && psdLength <= 20)) {
+					this.$message.error('密码格式错误，不能为空且必须为6-20位长度');
 					return false;
 				}
 				return true;
