@@ -90,7 +90,7 @@
 													<div class="font-bold m-b-1">答案来源</div>
 													<div class="flex gap-10">
 														<template v-for="(sourceItem, sourceIndex) of item.sourceList">
-															<el-tooltip effect="light" :content="sourceItem.content" placement="top">
+															<el-tooltip effect="light" :content="sourceItem.content || '无'" placement="top">
 																<div class="source px-4 py-1 border-2 rounded-lg cursor-pointer hover:underline">
 																	<el-link>{{ sourceItem.file_name }}</el-link>
 																</div>
