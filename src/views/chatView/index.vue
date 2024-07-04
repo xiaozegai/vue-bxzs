@@ -83,7 +83,7 @@
 												<div
 													v-if="item.type === 'answer' && item.finished && item.sourceList?.length"
 													class="source-box w-full my-2">
-													<div>答案来源</div>
+													<div class="font-bold m-b-1">答案来源</div>
 													<div class="flex gap-10">
 														<template v-for="(sourceItem, sourceIndex) of item.sourceList">
 															<el-tooltip effect="light" :content="sourceItem.content" placement="top">

@@ -86,15 +86,17 @@
 												<!-- 来源-按钮 -->
 												<div
 													v-if="item.type === 'answer' && item.finished && item.sourceList?.length"
-													class="source-box w-full my-2 flex gap-10">
-													<template v-for="(sourceItem, sourceIndex) of item.sourceList">
-														<el-tooltip effect="light" :content="sourceItem.file_name" placement="top">
-															<div class="source px-4 py-1 border-2 rounded-lg cursor-pointer hover:underline">
-																<!-- <el-link>{{ sourceItem.file_name }}</el-link> -->
-																<el-link>{{ '答案来源' + (sourceIndex + 1) }}</el-link>
-															</div>
-														</el-tooltip>
-													</template>
+													class="source-box w-full my-2">
+													<div class="font-bold m-b-1">答案来源</div>
+													<div class="flex gap-10">
+														<template v-for="(sourceItem, sourceIndex) of item.sourceList">
+															<el-tooltip effect="light" :content="sourceItem.content" placement="top">
+																<div class="source px-4 py-1 border-2 rounded-lg cursor-pointer hover:underline">
+																	<el-link>{{ sourceItem.file_name }}</el-link>
+																</div>
+															</el-tooltip>
+														</template>
+													</div>
 												</div>
 												<!-- 复制-按钮 -->
 												<div class="flex justify-start space-x-1 text-gray-700 dark:text-gray-500">

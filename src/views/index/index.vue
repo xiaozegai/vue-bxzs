@@ -406,6 +406,7 @@ export default {
 		updateResponseObj(obj) {
 			this.responseObj = obj;
 			this.$set(this.messageList[this.messageList.length - 1], 'sourceList', obj.data.slice(0, 3));
+			this.$set(this.sessionList[0], 'id', obj.session_id);
 		}
 	},
 	beforeDestroy() {}
