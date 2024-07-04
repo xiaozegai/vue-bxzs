@@ -458,7 +458,7 @@ export default {
 			}
 		},
 		getAvatarSrc(type) {
-			return type === 'question' ? images[0] : images[1];
+			return type === 'question' ? this.$store.state.user.avatar : images[0];
 		},
 		checkFile() {
 			const fileInput = document.querySelector('input[type="file"]');

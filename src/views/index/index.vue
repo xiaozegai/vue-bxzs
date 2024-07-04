@@ -350,6 +350,7 @@ export default {
 			this.currentSessionIndex = currentIndex;
 			localStorage.setItem('currentSessionIndex', currentIndex);
 			this.resetValue(true);
+			console.log(session);
 			if (session.kb_type === 'all') {
 				this.$router.push({ path: `/chat` });
 			} else {
@@ -405,8 +406,10 @@ export default {
 		},
 		updateResponseObj(obj) {
 			this.responseObj = obj;
+			console.log(obj);
 			this.$set(this.messageList[this.messageList.length - 1], 'sourceList', obj.data.slice(0, 3));
 			this.$set(this.sessionList[0], 'id', obj.session_id);
+			this.$set(this.sessionList[0], 'kb_type', obj.kb_type);
 		}
 	},
 	beforeDestroy() {}

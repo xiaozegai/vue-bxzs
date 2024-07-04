@@ -439,9 +439,10 @@ export default {
 			}
 		},
 		getAvatarSrc(type) {
-			return type === 'question' ? images[0] : this.maskList[this.maskIndex].avatar;
+			return type === 'question' ? this.$store.state.user.avatar : images[0];
 		},
 		getTitile() {
+      console.log(this.maskList,this.maskIndex);
 			return this.maskList[this.maskIndex].name;
 		},
 		checkFile() {
@@ -473,6 +474,7 @@ export default {
 		},
 		// 生成新消息
 		generateMessage(question) {
+			console.log(this.getTitile());
 			// 生成新消息
 			const newMessage = {
 				type: 'answer',
