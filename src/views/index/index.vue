@@ -403,6 +403,8 @@ export default {
 		},
 		onAddMessage(message) {
 			this.messageList.push(message);
+			this.currentSessionIndex = 0;
+			localStorage.setItem('currentSessionIndex', currentIndex);
 		},
 		updateResponseObj(obj) {
 			this.responseObj = obj;
