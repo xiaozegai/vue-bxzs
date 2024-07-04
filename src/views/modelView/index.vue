@@ -442,7 +442,6 @@ export default {
 			return type === 'question' ? this.$store.state.user.avatar : images[0];
 		},
 		getTitile() {
-      console.log(this.maskList,this.maskIndex);
 			return this.maskList[this.maskIndex].name;
 		},
 		checkFile() {

@@ -133,7 +133,7 @@ export default {
     verify() {
       let accountReg = /^([a-zA-Z0-9_-])+@([a-zA-Z0-9_-])+(.[a-zA-Z0-9_-])+$/; // 邮箱正则
       let psdLength = this.form.password.length;
-      let nicknameReg = /^[\u4e00-\u9fa5_a-zA-Z0-9_]{2,10}$/; // 昵称正则
+      let nicknameReg = /^[\u4e00-\u9fa5_a-zA-Z0-9_]{2,50}$/; // 昵称正则
       if (this.toggleType === 1) {
         if (
           this.form.account === "" ||

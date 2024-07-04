@@ -250,7 +250,6 @@ export default {
 		const sessionBox = document.getElementById('session-box');
 		sessionBox.addEventListener('scroll', () => {
 			if (sessionBox.scrollHeight - sessionBox.scrollTop === sessionBox.clientHeight) {
-				console.log('滚动到底部');
 				this.page++;
 				this.getChatListApi();
 			}
@@ -260,10 +259,12 @@ export default {
 		init() {
 			this.getKbIdsApi();
 			let currentSessionIndex = localStorage.getItem('currentSessionIndex');
-			if (currentSessionIndex !== undefined || currentSessionIndex !== null) {
-				this.currentSessionIndex = parseInt(currentSessionIndex);
+			// 判断localStorage内是否存在currentSessionIndex的值，这个值是一个数字，可以为0但不可以为null或undefined
+			if (currentSessionIndex !== null && Number(currentSessionIndex) >= 0) {
+				this.currentSessionIndex = Number(currentSessionIndex);
 				this.getChatListApi(true, this.currentSessionIndex);
 			} else {
+				this.currentSessionIndex = 0;
 				this.getChatListApi();
 			}
 		},
@@ -294,8 +295,18 @@ export default {
 					this.page--;
 				}
 			}
-			if (bool && this.sessionList.length) {
-				this.getChatDetailApi(this.sessionList[index].id);
+			if (bool && index) {
+				if (!this.sessionList.length) {
+					return;
+				} else if (index >= this.sessionList.length) {
+					this.getChatDetailApi(this.sessionList[0].id);
+				} else {
+					this.getChatDetailApi(this.sessionList[index].id);
+				}
+			} else {
+				if (this.sessionList.length) {
+					this.getChatDetailApi(this.sessionList[0].id);
+				}
 			}
 		},
 		async getChatDetailApi(sessionId) {
