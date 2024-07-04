@@ -113,7 +113,7 @@
 															</svg>
 														</button>
 													</div> -->
-													<div aria-label="复制" class="flex" @click="copyCode(item)">
+													<div aria-label="复制" title="复制" class="flex" @click="copyCode(item)">
 														<button
 															class="invisible group-hover:visible p-1 rounded dark:hover:text-white hover:text-black transition">
 															<svg
@@ -130,8 +130,8 @@
 															</svg>
 														</button>
 													</div>
-													<!-- <template v-if="item.type !== 'user'">
-														<div aria-label="赞" class="flex">
+													<template v-if="item.type !== 'user'">
+														<div aria-label="赞" title="赞" class="flex" @click="interact(item, 1)">
 															<button
 																class="invisible group-hover:visible p-1 rounded dark:hover:text-white hover:text-black transition">
 																<svg
@@ -142,13 +142,14 @@
 																	stroke-linecap="round"
 																	stroke-linejoin="round"
 																	class="w-4 h-4"
+																	:class="item.is_like === 1 ? 'text-yellow-400' : ''"
 																	xmlns="http://www.w3.org/2000/svg">
 																	<path
 																		d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
 																</svg>
 															</button>
 														</div>
-														<div aria-label="踩" class="flex">
+														<div aria-label="踩" title="踩" class="flex" @click="interact(item, -1)">
 															<button
 																class="invisible group-hover:visible p-1 rounded dark:hover:text-white hover:text-black transition">
 																<svg
@@ -159,13 +160,14 @@
 																	stroke-linecap="round"
 																	stroke-linejoin="round"
 																	class="w-4 h-4"
+																	:class="item.is_like === -1 ? 'text-yellow-400' : ''"
 																	xmlns="http://www.w3.org/2000/svg">
 																	<path
 																		d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"></path>
 																</svg>
 															</button>
 														</div>
-														<div aria-label="读出来" class="flex">
+														<!-- <div aria-label="读出来" class="flex">
 															<button
 																id="speak-button-4ab582be-4177-47d6-86f2-8313264aa24d"
 																class="invisible group-hover:visible p-1 rounded dark:hover:text-white hover:text-black transition">
@@ -240,8 +242,8 @@
 																		d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"></path>
 																</svg>
 															</button>
-														</div>
-													</template> -->
+														</div> -->
+													</template>
 												</div>
 											</div>
 										</div>
@@ -255,116 +257,13 @@
 			<!-- 底部输入区域 -->
 			<div class="w-full tip-box">
 				<!-- 提示框 -->
-				<div class="px-2.5 -mb-0.5 mx-auto inset-x-0 bg-transparent flex justify-center" v-if="!startChat">
-					<div class="flex flex-col max-w-3xl w-full">
-						<div class="relative"></div>
-						<div class="w-full relative">
-							<div class="mb-3 md:p-1 text-left w-full">
-								<div class="flex flex-wrap-reverse px-2 text-left">
-									<div
-										class="basis-full sm:basis-1/2 p-[5px] px-1"
-										v-for="(item, index) of tipList"
-										:key="index"
-										:class="index >= 2 ? 'hidden sm:inline-flex' : ''"
-										@click="chooseTip(item)">
-										<button class="box flex-1 flex justify-between w-full h-full px-4 py-2.5 bg-gray-50">
-											<div class="flex flex-col text-left self-center">
-												<div class="text-sm font-medium dark:text-gray-300">{{ item.title }}</div>
-												<div class="text-sm text-gray-500 line-clamp-1">{{ item.description }}</div>
-											</div>
-											<div class="arrow self-center p-1 rounded-lg text-gray-50 transition">
-												<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="w-4 h-4">
-													<path
-														fill-rule="evenodd"
-														d="M8 14a.75.75 0 0 1-.75-.75V4.56L4.03 7.78a.75.75 0 0 1-1.06-1.06l4.5-4.5a.75.75 0 0 1 1.06 0l4.5 4.5a.75.75 0 0 1-1.06 1.06L8.75 4.56v8.69A.75.75 0 0 1 8 14Z"
-														clip-rule="evenodd"></path>
-												</svg>
-											</div>
-										</button>
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
+				<question-prompt v-if="!startChat" @onChooseTip="chooseTip"></question-prompt>
 				<!-- 输入问题框 -->
-				<div class="bg-white dark:bg-gray-900">
-					<div class="max-w-3xl px-2.5 mx-auto inset-x-0">
-						<div class="pb-2">
-							<input type="file" hidden="" multiple="" />
-							<form
-								class="flex flex-col relative w-full rounded-3xl px-1.5 border border-gray-100 dark:border-gray-850 bg-white dark:bg-gray-900 dark:text-gray-100">
-								<div class="flex">
-									<div class="self-end mb-2 ml-1">
-										<div aria-label="上传文件" class="flex">
-											<button
-												class="bg-miku-light hover:bg-gray-100 text-gray-800 dark:bg-gray-850 dark:text-white dark:hover:bg-gray-800 transition rounded-full p-1.5"
-												type="button"
-												@click="checkFile">
-												<svg
-													xmlns="http://www.w3.org/2000/svg"
-													viewBox="0 0 16 16"
-													fill="#39C5BB"
-													class="w-[1.2rem] h-[1.2rem]">
-													<path
-														d="M8.75 3.75a.75.75 0 0 0-1.5 0v3.5h-3.5a.75.75 0 0 0 0 1.5h3.5v3.5a.75.75 0 0 0 1.5 0v-3.5h3.5a.75.75 0 0 0 0-1.5h-3.5v-3.5Z"></path>
-												</svg>
-											</button>
-										</div>
-									</div>
-									<textarea
-										id="chat-textarea"
-										class="outline-none w-full py-3 px-3 rounded-xl resize-none h-[48px]"
-										placeholder="发送消息"
-										rows="1"
-										v-model="message"
-										@input="handleInput"
-										@keydown="handlekeydown"></textarea>
-									<div class="self-end mb-2 flex space-x-1 mr-1">
-										<div aria-label="录音" class="flex">
-											<button
-												id="voice-input-button"
-												class="text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-850 transition rounded-full p-1.5 mr-0.5 self-center"
-												type="button"
-												@click="record">
-												<svg
-													xmlns="http://www.w3.org/2000/svg"
-													viewBox="0 0 20 20"
-													fill="#39C5BB"
-													class="w-5 h-5 translate-y-[0.5px]">
-													<path d="M7 4a3 3 0 016 0v6a3 3 0 11-6 0V4z"></path>
-													<path
-														d="M5.5 9.643a.75.75 0 00-1.5 0V10c0 3.06 2.29 5.585 5.25 5.954V17.5h-1.5a.75.75 0 000 1.5h4.5a.75.75 0 000-1.5h-1.5v-1.546A6.001 6.001 0 0016 10v-.357a.75.75 0 00-1.5 0V10a4.5 4.5 0 01-9 0v-.357z"></path>
-												</svg>
-											</button>
-										</div>
-										<div aria-label="发送消息" class="flex">
-											<button
-												class="text-white bg-gray-100 dark:text-gray-900 dark:bg-gray-800 disabled transition rounded-full p-1.5 self-center"
-												:class="message !== '' ? 'bg-miku' : ''"
-												:disabled="message === ''"
-												type="submit"
-												@click.prevent="sendMessage(message)">
-												<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="w-5 h-5">
-													<path
-														fill-rule="evenodd"
-														d="M8 14a.75.75 0 0 1-.75-.75V4.56L4.03 7.78a.75.75 0 0 1-1.06-1.06l4.5-4.5a.75.75 0 0 1 1.06 0l4.5 4.5a.75.75 0 0 1-1.06 1.06L8.75 4.56v8.69A.75.75 0 0 1 8 14Z"
-														clip-rule="evenodd"></path>
-												</svg>
-											</button>
-										</div>
-									</div>
-								</div>
-							</form>
-							<div class="mt-1.5 text-xs text-gray-500 text-center about">
-								Powered by
-								<a href="" target="_blank" class="link underline">xxxxx</a>
-								&amp;
-								<a href="https://team.ncuos.com/" target="_blank" class="link underline">xxxxx</a>
-							</div>
-						</div>
-					</div>
-				</div>
+				<input-question
+					:message="message"
+					@onHandleInput="handleInput"
+					@onHandlekeydown="handlekeydown"
+					@onSendMessage="sendMessage"></input-question>
 			</div>
 		</div>
 	</div>
@@ -376,11 +275,15 @@ import { EventStreamContentType, fetchEventSource } from '@microsoft/fetch-event
 import { upload_answer } from '@/api/user';
 import VueMarkdown from 'vue-markdown';
 import handerNav from '../components/handerNav.vue';
+import questionPrompt from '../components/questionPrompt.vue';
+import inputQuestion from '../components/inputQuestion.vue';
 export default {
 	name: 'chat',
 	components: {
 		handerNav,
-		'vue-markdown': VueMarkdown
+		'vue-markdown': VueMarkdown,
+		questionPrompt,
+		inputQuestion
 	},
 	props: {
 		maskList: {
@@ -405,17 +308,7 @@ export default {
 			textareaDom: null,
 			messagesContainer: null,
 			message: '',
-			finishd: true,
-			tipList: [
-				{
-					title: '科研经费报销流程',
-					description: '科研经费报销'
-				},
-				{
-					title: '如何报销经费',
-					description: '如何报销？？'
-				}
-			]
+			finishd: true
 		};
 	},
 	mounted() {
@@ -424,7 +317,8 @@ export default {
 	},
 	computed: {},
 	methods: {
-		handleInput() {
+		handleInput(e) {
+			this.message = e.target.value;
 			// 动态改变textarea的高度
 			this.textareaDom.style.height = 'auto';
 			this.textareaDom.style.height = this.textareaDom.scrollHeight + 'px';
@@ -460,10 +354,6 @@ export default {
 		getAvatarSrc(type) {
 			return type === 'question' ? this.$store.state.user.avatar : images[0];
 		},
-		checkFile() {
-			const fileInput = document.querySelector('input[type="file"]');
-			fileInput.click();
-		},
 		handlekeydown(e) {
 			if (e.key === 'Enter' && !e.shiftKey) {
 				e.preventDefault();
@@ -474,18 +364,6 @@ export default {
 		resizeTextarea() {
 			this.message = '';
 			this.textareaDom.style.height = 'auto';
-		},
-		// 打开设备麦克风录音
-		record() {
-			if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-				navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
-					const mediaRecorder = new MediaRecorder(stream); // 创建一个MediaRecorder对象，用于录制音频
-					mediaRecorder.start(); // 开始录制
-					mediaRecorder.ondataavailable = (e) => {
-						console.log(e);
-					};
-				});
-			}
 		},
 		// 生成新消息
 		generateMessage(question) {
@@ -532,7 +410,6 @@ export default {
 						_that.messageList[index].message += JSON.parse(e.data.replace(/\\n\\n/gm, '<br>')).response;
 						// _that.messageList[index].message += JSON.parse(e.data).response;
 					} else if (e.event === 'close') {
-						// _that.responseObj = JSON.parse(e.data);
 						_that.$emit('updateResponseObj', JSON.parse(e.data));
 					} else {
 						console.log('其他data', e.data);
@@ -541,11 +418,12 @@ export default {
 					_that.messagesContainer.scrollTop = _that.messagesContainer.scrollHeight;
 				},
 				async onclose(e) {
-					console.log('关闭', _that.responseObj);
+					console.log('关闭');
 					_that.finishd = true; // 重置状态
 					let obj = {
 						answer: _that.messageList[index].message,
-						content_id: _that.responseObj.content_id
+						content_id: _that.responseObj.content_id,
+						source: _that.responseObj.data
 					};
 					const { data } = await upload_answer(obj);
 					if (data.status === 200) {
@@ -602,6 +480,10 @@ export default {
 					duration: 800
 				});
 			});
+		},
+		interact(like) {
+			// 点赞
+			console.log(like);
 		}
 	}
 };
@@ -633,15 +515,6 @@ export default {
 				background-color: #f4fafc;
 				border-color: rgb(127, 220, 212);
 			}
-		}
-	}
-}
-
-.tip-box {
-	& button.box:hover {
-		background-color: #f4fafc;
-		& .arrow {
-			color: #39c5bb;
 		}
 	}
 }

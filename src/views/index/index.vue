@@ -101,32 +101,11 @@
 										</div>
 									</div>
 								</div>
-								<div class="settings invisible group-hover:visible from-gray-100 dark:from-gray-950">
-									<div class="flex self-center space-x-1.5 z-10">
-										<button
-											aria-controls="MBgnSzNi5f"
-											aria-expanded="false"
-											data-state="closed"
-											id="PwHy30rRlH"
-											tabindex="0"
-											data-melt-dropdown-menu-trigger=""
-											data-menu-trigger=""
-											type="button">
-											<div aria-label="更多" class="flex">
-												<button aria-label="Chat Menu" class="self-center dark:hover:text-white transition">
-													<svg
-														xmlns="http://www.w3.org/2000/svg"
-														viewBox="0 0 16 16"
-														fill="currentColor"
-														class="w-4 h-4">
-														<path
-															d="M2 8a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0ZM6.5 8a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0ZM12.5 6.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3Z"></path>
-													</svg>
-												</button>
-											</div>
-										</button>
-										<div slot="content"></div>
-									</div>
+								<div
+									class="settings invisible group-hover:visible from-gray-100 dark:from-gray-950 cursor-pointer"
+									title="删除"
+									@click="deleteSession(item)">
+									<i class="el-icon-delete"></i>
 								</div>
 							</div>
 						</div>
@@ -199,7 +178,7 @@ import src1 from '../../assets/image/mask-1.webp';
 import src2 from '../../assets/image/mask-2.webp';
 import src3 from '../../assets/image/mask-3.webp';
 import src4 from '../../assets/image/logo1.png';
-import { user_logout, get_kb_ids, get_chat_list, get_chat_detail } from '@/api/user';
+import { user_logout, get_kb_ids, get_chat_list, get_chat_detail, del_chat } from '@/api/user';
 import Cookies from 'js-cookie';
 
 export default {
@@ -283,6 +262,8 @@ export default {
 						this.maskList.push(item);
 					}
 				});
+			} else {
+				this.$message.error('系统繁忙，稍后重试！');
 			}
 		},
 		async getChatListApi(bool, index) {
@@ -300,12 +281,15 @@ export default {
 					return;
 				} else if (index >= this.sessionList.length) {
 					this.getChatDetailApi(this.sessionList[0].id);
+					this.setDocumentTitle(this.sessionList[0].title);
 				} else {
 					this.getChatDetailApi(this.sessionList[index].id);
+					this.setDocumentTitle(this.sessionList[index].title);
 				}
 			} else {
 				if (this.sessionList.length) {
 					this.getChatDetailApi(this.sessionList[0].id);
+					this.setDocumentTitle(this.sessionList[0].title);
 				}
 			}
 		},
@@ -356,12 +340,16 @@ export default {
 			this.resetValue();
 			this.$router.push({ path: `/chat` });
 		},
+		setDocumentTitle(title) {
+			document.title = `"${title}"` + ' | ' + '南大-报销助手';
+		},
 		async chooseSession(session, currentIndex) {
 			if (this.currentSessionIndex === currentIndex && this.$route.path === '/chat') return;
 			this.currentSessionIndex = currentIndex;
 			localStorage.setItem('currentSessionIndex', currentIndex);
 			this.resetValue(true);
-			console.log(session);
+			// 把浏览器头设置为session.title
+			this.setDocumentTitle(session.title);
 			if (session.kb_type === 'all') {
 				this.$router.push({ path: `/chat` });
 			} else {
@@ -391,7 +379,9 @@ export default {
 					name: '报销助手',
 					message: item.answer,
 					time: item.create_time_text,
-					finished: true
+					finished: true,
+					sourceList: JSON.parse(item.source).slice(0, 3),
+					is_like: item.is_like
 				};
 				_that.messageList.push(...[question, answer]);
 			});
@@ -415,14 +405,25 @@ export default {
 		onAddMessage(message) {
 			this.messageList.push(message);
 			this.currentSessionIndex = 0;
-			localStorage.setItem('currentSessionIndex', currentIndex);
+			localStorage.setItem('currentSessionIndex', 0);
 		},
 		updateResponseObj(obj) {
 			this.responseObj = obj;
-			console.log(obj);
-			this.$set(this.messageList[this.messageList.length - 1], 'sourceList', obj.data.slice(0, 3));
-			this.$set(this.sessionList[0], 'id', obj.session_id);
-			this.$set(this.sessionList[0], 'kb_type', obj.kb_type);
+			try {
+				this.$set(this.messageList[this.messageList.length - 1], 'sourceList', obj.data.slice(0, 3));
+				this.$set(this.sessionList[0], 'id', obj.session_id);
+				this.$set(this.sessionList[0], 'kb_type', obj.kb_type);
+			} catch {}
+		},
+		// 删除会话
+		async deleteSession(item) {
+			const { data } = await del_chat(item.id);
+			if (data.status === 200) {
+				this.sessionList = this.sessionList.filter((session) => session.id !== item.id);
+				this.resetValue();
+				this.currentSessionIndex = 0;
+				localStorage.setItem('currentSessionIndex', 0);
+			}
 		}
 	},
 	beforeDestroy() {}

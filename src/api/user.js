@@ -42,3 +42,8 @@ export const get_chat_list = async (page, limit) => {
 export const get_chat_detail = async (id) => {
 	return await request(`/chat_detail/${id}`);
 };
+
+// 删除会话 /del_chat/{id}
+export const del_chat = async (id) => {
+	return await request(`/del_chat/${id}`, { method: 'POST' });
+};
