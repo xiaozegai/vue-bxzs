@@ -436,7 +436,7 @@ export default {
 			const { data } = await answer_rate(message.id, { is_like: param.is_like });
 			if (data.status === 200) {
 				this.$message.success('反馈成功！');
-				this.messageList[index].is_like = param.is_like;
+				this.$set(this.messageList[index], 'is_like', param.is_like);
 			} else {
 				this.$message.error('稍后再试！');
 			}

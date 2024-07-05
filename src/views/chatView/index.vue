@@ -474,13 +474,22 @@ export default {
 		// 复制
 		copyCode(item) {
 			// '复制', item.message
-			window.navigator.clipboard.writeText(item.message).then(() => {
-				this.$message({
-					message: '复制成功',
-					type: 'success',
-					duration: 800
+			window.navigator.clipboard
+				.writeText(item.message)
+				.then(() => {
+					this.$message({
+						message: '复制成功',
+						type: 'success',
+						duration: 800
+					});
+				})
+				.catch((e) => {
+					this.$message({
+						message: '复制失败' + e,
+						type: 'error',
+						duration: 800
+					});
 				});
-			});
 		},
 		// 点评回复
 		interact(item, is_like) {
