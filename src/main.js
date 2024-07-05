@@ -74,7 +74,12 @@ onHttpError(({ status, message, data }) => {
 // 	Prism
 // });
 
-Vue.use(Element, { i18n: (key, value) => i18n.t(key, value) }).use(VWave);
+// 复制
+import VueClipboard from 'vue-clipboard2';
+
+Vue.use(Element, { i18n: (key, value) => i18n.t(key, value) })
+	.use(VWave)
+	.use(VueClipboard);
 // .use(VueMarkdownEditor)
 // .use(VMdPreview);
 new Vue({

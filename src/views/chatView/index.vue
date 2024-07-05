@@ -113,8 +113,10 @@
 															</svg>
 														</button>
 													</div> -->
-													<div aria-label="复制" title="复制" class="flex" @click="copyCode(item)">
+													<div aria-label="复制" title="复制" class="flex">
 														<button
+															v-clipboard:copy="item.message"
+															v-clipboard:success="copyCode"
 															class="invisible group-hover:visible p-1 rounded dark:hover:text-white hover:text-black transition">
 															<svg
 																xmlns="http://www.w3.org/2000/svg"
@@ -472,24 +474,8 @@ export default {
 			}
 		},
 		// 复制
-		copyCode(item) {
-			// '复制', item.message
-			window.navigator.clipboard
-				.writeText(item.message)
-				.then(() => {
-					this.$message({
-						message: '复制成功',
-						type: 'success',
-						duration: 800
-					});
-				})
-				.catch((e) => {
-					this.$message({
-						message: '复制失败' + e,
-						type: 'error',
-						duration: 800
-					});
-				});
+		copyCode() {
+			this.$message.success('复制成功');
 		},
 		// 点评回复
 		interact(item, is_like) {

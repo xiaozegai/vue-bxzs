@@ -24,8 +24,8 @@ export default defineConfig({
 	server: {
 		proxy: {
 			'/api': {
-				target: 'http://39.100.28.20:10001',
-        // target: 'http://192.168.1.233:8014',
+				// target: 'http://39.100.28.20:10001',
+        target: 'http://192.168.1.233:8014',
 				changeOrigin: true
 			}
 		}
