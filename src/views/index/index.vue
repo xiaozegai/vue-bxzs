@@ -432,10 +432,13 @@ export default {
 		async onInteract(param) {
 			let index = this.messageList.findIndex((v) => v === param.item);
 			let message = this.messageList[index];
-			if (this.messageList[index].is_like === param.is_like) return this.$message.info('感谢您的反馈！');
+			if (this.messageList[index].is_like === param.is_like) {
+				param.is_like = 0;
+			}
+			let msg = param.is_like === 0 ? '取消' : param.is_like === 1 ? '有用!' : '没用！';
 			const { data } = await answer_rate(message.id, { is_like: param.is_like });
 			if (data.status === 200) {
-				this.$message.success('反馈成功！');
+				this.$message.success(msg);
 				this.$set(this.messageList[index], 'is_like', param.is_like);
 			} else {
 				this.$message.error('稍后再试！');
