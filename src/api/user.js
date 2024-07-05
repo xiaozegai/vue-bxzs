@@ -47,3 +47,8 @@ export const get_chat_detail = async (id) => {
 export const del_chat = async (id) => {
 	return await request(`/del_chat/${id}`, { method: 'POST' });
 };
+
+// 回答-点赞点踩 /answer_rate/{id}
+export const answer_rate = async (id, data) => {
+	return await request(`/answer_rate/${id}`, { method: 'POST', data });
+};

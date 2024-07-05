@@ -164,7 +164,8 @@
 			:messageList="messageList"
 			@onAddMessage="onAddMessage"
 			:responseObj="responseObj"
-			@updateResponseObj="updateResponseObj" />
+			@updateResponseObj="updateResponseObj"
+			@onInteract="onInteract" />
 		<!-- 关闭 - 开启 -->
 		<div id="tippy-6" :class="{ tippyVisible: sidebarToggle, tippyMove: !sidebarOpen }">
 			<div class="tippy-box">
@@ -178,7 +179,7 @@ import src1 from '../../assets/image/mask-1.webp';
 import src2 from '../../assets/image/mask-2.webp';
 import src3 from '../../assets/image/mask-3.webp';
 import src4 from '../../assets/image/logo1.png';
-import { user_logout, get_kb_ids, get_chat_list, get_chat_detail, del_chat } from '@/api/user';
+import { user_logout, get_kb_ids, get_chat_list, get_chat_detail, del_chat, answer_rate } from '@/api/user';
 import Cookies from 'js-cookie';
 
 export default {
@@ -374,13 +375,14 @@ export default {
 					finished: true
 				};
 				let answer = {
+					id: item.id,
 					type: 'answer',
 					avatar: src4,
 					name: '报销助手',
 					message: item.answer,
 					time: item.create_time_text,
 					finished: true,
-					sourceList: JSON.parse(item.source).slice(0, 3),
+					sourceList: JSON.parse(item.source)?.slice(0, 3),
 					is_like: item.is_like
 				};
 				_that.messageList.push(...[question, answer]);
@@ -411,6 +413,7 @@ export default {
 			this.responseObj = obj;
 			try {
 				this.$set(this.messageList[this.messageList.length - 1], 'sourceList', obj.data.slice(0, 3));
+				this.$set(this.messageList[this.messageList.length - 1], 'id', obj.content_id);
 				this.$set(this.sessionList[0], 'id', obj.session_id);
 				this.$set(this.sessionList[0], 'kb_type', obj.kb_type);
 			} catch {}
@@ -423,6 +426,19 @@ export default {
 				this.resetValue();
 				this.currentSessionIndex = 0;
 				localStorage.setItem('currentSessionIndex', 0);
+			}
+		},
+		// 交互点赞事件
+		async onInteract(param) {
+			let index = this.messageList.findIndex((v) => v === param.item);
+			let message = this.messageList[index];
+			if (this.messageList[index].is_like === param.is_like) return this.$message.info('感谢您的反馈！');
+			const { data } = await answer_rate(message.id, { is_like: param.is_like });
+			if (data.status === 200) {
+				this.$message.success('反馈成功！');
+				this.messageList[index].is_like = param.is_like;
+			} else {
+				this.$message.error('稍后再试！');
 			}
 		}
 	},

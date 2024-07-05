@@ -83,7 +83,7 @@
 												<div
 													v-if="item.type === 'answer' && item.finished && item.sourceList?.length"
 													class="source-box w-full my-2">
-													<div class="font-bold m-b-1">答案来源</div>
+													<div class="font-bold m-b-1 text-blue-600">答案来源</div>
 													<div class="flex gap-10">
 														<template v-for="(sourceItem, sourceIndex) of item.sourceList">
 															<el-tooltip effect="light" :content="sourceItem.content || '无'" placement="top">
@@ -130,7 +130,7 @@
 															</svg>
 														</button>
 													</div>
-													<template v-if="item.type !== 'user'">
+													<template v-if="item.type !== 'question'">
 														<div aria-label="赞" title="赞" class="flex" @click="interact(item, 1)">
 															<button
 																class="invisible group-hover:visible p-1 rounded dark:hover:text-white hover:text-black transition">
@@ -160,7 +160,7 @@
 																	stroke-linecap="round"
 																	stroke-linejoin="round"
 																	class="w-4 h-4"
-																	:class="item.is_like === -1 ? 'text-yellow-400' : ''"
+																	:class="item.is_like === -1 ? 'text-red-400' : ''"
 																	xmlns="http://www.w3.org/2000/svg">
 																	<path
 																		d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"></path>
@@ -471,6 +471,7 @@ export default {
 				});
 			}
 		},
+		// 复制
 		copyCode(item) {
 			// '复制', item.message
 			window.navigator.clipboard.writeText(item.message).then(() => {
@@ -481,9 +482,10 @@ export default {
 				});
 			});
 		},
-		interact(like) {
-			// 点赞
-			console.log(like);
+		// 点评回复
+		interact(item, is_like) {
+			// 在messageList找出下标
+			this.$emit('onInteract', { item, is_like });
 		}
 	}
 };
