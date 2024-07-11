@@ -52,3 +52,8 @@ export const del_chat = async (id) => {
 export const answer_rate = async (id, data) => {
 	return await request(`/answer_rate/${id}`, { method: 'POST', data });
 };
+
+// 获取文件base64数据 /get_file query参数 file_id
+export const get_file = async (file_id) => {
+	return await request(`/get_file?file_id=${file_id}`);
+};

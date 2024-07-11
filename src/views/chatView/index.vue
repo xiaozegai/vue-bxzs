@@ -88,7 +88,7 @@
 														<template v-for="(sourceItem, sourceIndex) of item.sourceList">
 															<el-tooltip effect="light" :content="sourceItem.content || '无'" placement="top">
 																<div class="source px-4 py-1 border-2 rounded-lg cursor-pointer hover:underline">
-																	<el-link>{{ sourceItem.file_name }}</el-link>
+																	<el-link @click="clickSource(sourceItem)">{{ sourceItem.file_name }}</el-link>
 																</div>
 															</el-tooltip>
 														</template>
@@ -267,6 +267,17 @@
 					@onHandlekeydown="handlekeydown"
 					@onSendMessage="sendMessage"></input-question>
 			</div>
+			<el-dialog
+				title="预览图片"
+				:visible.sync="dialogVisible"
+				:show-close="false"
+				:center="true"
+				width="30%"
+				@closed="handelClosed">
+				<el-image v-if="base64Str" style="margin: 0 auto" :src="base64Str" :preview-src-list="[base64Str]"></el-image>
+				<i v-else class="icon el-icon-loading"></i>
+				<div class="img-tip">点击图片可全屏预览！</div>
+			</el-dialog>
 		</div>
 	</div>
 </template>
@@ -274,7 +285,7 @@
 <script>
 import { images } from '@/utils/constans.js';
 import { EventStreamContentType, fetchEventSource } from '@microsoft/fetch-event-source';
-import { upload_answer } from '@/api/user';
+import { upload_answer, get_file } from '@/api/user';
 import VueMarkdown from 'vue-markdown';
 import handerNav from '../components/handerNav.vue';
 import questionPrompt from '../components/questionPrompt.vue';
@@ -310,7 +321,9 @@ export default {
 			textareaDom: null,
 			messagesContainer: null,
 			message: '',
-			finishd: true
+			finishd: true,
+			dialogVisible: false,
+			base64Str: ''
 		};
 	},
 	mounted() {
@@ -481,12 +494,37 @@ export default {
 		interact(item, is_like) {
 			// 在messageList找出下标
 			this.$emit('onInteract', { item, is_like });
+		},
+		async clickSource(item) {
+			let base64Src = this.getBase64Prefix(item.file_name);
+			if (!base64Src) return;
+
+			this.dialogVisible = true;
+			const { data } = await get_file(item.file_id);
+			if (data.status === 200) {
+				this.base64Str = base64Src + data.data.base64_content;
+			} else {
+				this.$message.error('获取图片失败');
+			}
+		},
+		// 获取base64前缀
+		getBase64Prefix(fileName) {
+			const filetypeList = ['png', 'jpg'];
+			const filetype = fileName.split('.')[1];
+			if (filetypeList.includes(filetype)) {
+				return filetype !== 'jpg' ? `data:image/${filetype};base64,` : 'data:image/jpeg;base64,';
+			} else {
+				return '';
+			}
+		},
+		handelClosed() {
+			this.base64Str = '';
 		}
 	}
 };
 </script>
 
-<style lang="less" scoped>
+<style lang="less">
 #messages-container {
 	.imgDefault {
 		width: 3.5rem;
@@ -518,5 +556,28 @@ export default {
 
 .bg-miku {
 	background-color: #39c5bb;
+}
+.el-dialog {
+	.el-dialog__header {
+		.el-dialog__title {
+			font-size: 24px;
+			font-weight: 500;
+		}
+	}
+	.el-dialog__body {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: space-between;
+		.img-tip {
+			color: #999;
+			font-size: 12px;
+			margin-top: 10px;
+		}
+		.icon {
+			font-size: 50px;
+			color: #999;
+		}
+	}
 }
 </style>
