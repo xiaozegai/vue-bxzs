@@ -179,7 +179,15 @@ import src1 from '../../assets/image/mask-1.webp';
 import src2 from '../../assets/image/mask-2.webp';
 import src3 from '../../assets/image/mask-3.webp';
 import src4 from '../../assets/image/logo1.png';
-import { user_logout, get_kb_ids, get_chat_list, get_chat_detail, del_chat, answer_rate } from '@/api/user';
+import {
+	user_logout,
+	get_kb_ids,
+	get_chat_list,
+	get_chat_detail,
+	del_chat,
+	answer_rate,
+	get_user_info
+} from '@/api/user';
 import Cookies from 'js-cookie';
 
 export default {

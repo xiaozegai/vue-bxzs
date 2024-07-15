@@ -411,13 +411,17 @@ export default {
 				},
 				body: JSON.stringify(data),
 				onopen(e) {
-					console.log('打开');
+					console.log('打开', e);
 					if (e.ok && e.headers.get('content-type').indexOf(EventStreamContentType) !== -1) {
 						_that.messageList[index].finished = true;
 					} else if (e.status !== 200) {
-						throw new FatalError();
+						_that.connectError().then(() => {
+							_that.$router.go(0);
+						});
 					} else {
-						throw new RetriableError();
+						_that.connectError().then(() => {
+							_that.$router.go(0);
+						});
 					}
 				},
 				onmessage(e) {
@@ -448,6 +452,15 @@ export default {
 					console.log('onerror', err);
 					throw err;
 				}
+			});
+		},
+		// 连接失败提示
+		connectError() {
+			this.$message.error('连接失败，请稍后重试');
+			return new Promise((resolve, reject) => {
+				setTimeout(() => {
+					resolve();
+				}, 2000);
 			});
 		},
 		// 获取历史消息等参数
@@ -498,13 +511,15 @@ export default {
 		async clickSource(item) {
 			let base64Src = this.getBase64Prefix(item.file_name);
 			if (!base64Src) return;
-
 			this.dialogVisible = true;
 			const { data } = await get_file(item.file_id);
 			if (data.status === 200) {
 				this.base64Str = base64Src + data.data.base64_content;
 			} else {
 				this.$message.error('获取图片失败');
+				setTimeout(() => {
+					this.dialogVisible = false;
+				}, 2000);
 			}
 		},
 		// 获取base64前缀
