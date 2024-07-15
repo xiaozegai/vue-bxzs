@@ -411,7 +411,6 @@ export default {
 				},
 				body: JSON.stringify(data),
 				onopen(e) {
-					console.log('打开', e);
 					if (e.ok && e.headers.get('content-type').indexOf(EventStreamContentType) !== -1) {
 						_that.messageList[index].finished = true;
 					} else if (e.status !== 200) {
@@ -431,13 +430,12 @@ export default {
 					} else if (e.event === 'close') {
 						_that.$emit('updateResponseObj', JSON.parse(e.data));
 					} else {
-						console.log('其他data', e.data);
+						// console.log('其他data', e.data);
 					}
 					// 让messagesContainer滚动到最下面
 					_that.messagesContainer.scrollTop = _that.messagesContainer.scrollHeight;
 				},
 				async onclose(e) {
-					console.log('关闭');
 					_that.finishd = true; // 重置状态
 					let obj = {
 						answer: _that.messageList[index].message,
@@ -449,7 +447,6 @@ export default {
 					}
 				},
 				onerror(err) {
-					console.log('onerror', err);
 					throw err;
 				}
 			});
