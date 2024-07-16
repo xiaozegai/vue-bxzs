@@ -432,8 +432,8 @@ export default {
 			if (data.status === 200) {
 				this.sessionList = this.sessionList.filter((session) => session.id !== item.id);
 				this.resetValue();
-				this.currentSessionIndex = 0;
-				localStorage.setItem('currentSessionIndex', 0);
+				this.currentSessionIndex = -1;
+				localStorage.setItem('currentSessionIndex', -1);
 			}
 		},
 		// 交互点赞事件

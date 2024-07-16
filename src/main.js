@@ -19,7 +19,7 @@ Vue.prototype.$echarts = echarts;
 
 // 导入请求
 import { createRequest, onBeforeRequest, onAfterResponse, onHttpError } from '@/utils/requests';
-createRequest({ baseURL: `/api`, timeout: 100000 });
+createRequest({ baseURL: `/api`, timeout: 5000 });
 // 对请求后消息做统一处理
 onAfterResponse((response) => {
 	const { data } = response;

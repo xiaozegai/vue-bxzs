@@ -333,32 +333,38 @@ export default {
 	computed: {},
 	methods: {
 		handleInput(e) {
+			// 判断e.target.value是否为空，为空则不赋值给messages
+			if (e.target.value.trim() === '') return (this.message = '');
 			this.message = e.target.value;
 			// 动态改变textarea的高度
 			this.textareaDom.style.height = 'auto';
 			this.textareaDom.style.height = this.textareaDom.scrollHeight + 'px';
 		},
 		sendMessage(msg) {
+			// msg不能全是空格，且去除两端空格后不为空
+			if (msg.trim() === '') {
+				return this.$message({
+					message: '请输入内容！',
+					type: 'warning'
+				});
+			}
+			let message = msg.trim();
 			if (this.finishd) {
 				this.finishd = false;
 				this.isFirstMessage(msg);
 				// 添加消息
-				if (this.message !== '' || msg) {
-					let newMessage = {
-						type: 'question',
-						avatar: this.getAvatarSrc('question'),
-						name: '你',
-						message: msg ? msg : this.message,
-						time: new Date().toLocaleString(),
-						finished: true
-					};
-					this.$emit('onAddMessage', newMessage);
-					this.$emit('onStartChat', true);
-					this.resizeTextarea();
-					this.generateMessage(msg ? msg : this.message);
-				} else {
-					this.finishd = true;
-				}
+				let newMessage = {
+					type: 'question',
+					avatar: this.getAvatarSrc('question'),
+					name: '你',
+					message: message,
+					time: new Date().toLocaleString(),
+					finished: true
+				};
+				this.$emit('onAddMessage', newMessage);
+				this.$emit('onStartChat', true);
+				this.resizeTextarea();
+				this.generateMessage(message);
 			} else {
 				this.$message({
 					message: '请等待上一条回答结束！',
@@ -414,13 +420,9 @@ export default {
 					if (e.ok && e.headers.get('content-type').indexOf(EventStreamContentType) !== -1) {
 						_that.messageList[index].finished = true;
 					} else if (e.status !== 200) {
-						_that.connectError().then(() => {
-							_that.$router.go(0);
-						});
+						_that.$message.error('连接失败');
 					} else {
-						_that.connectError().then(() => {
-							_that.$router.go(0);
-						});
+						throw new Error('连接失败');
 					}
 				},
 				onmessage(e) {
@@ -449,15 +451,6 @@ export default {
 				onerror(err) {
 					throw err;
 				}
-			});
-		},
-		// 连接失败提示
-		connectError() {
-			this.$message.error('连接失败，请稍后重试');
-			return new Promise((resolve, reject) => {
-				setTimeout(() => {
-					resolve();
-				}, 2000);
 			});
 		},
 		// 获取历史消息等参数

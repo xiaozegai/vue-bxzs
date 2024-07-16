@@ -143,8 +143,8 @@ export default {
           return false;
         } else if (
           this.form.password === "" ||
-          psdLength <= 6 ||
-          psdLength >= 20
+          psdLength < 6 ||
+          psdLength > 20
         ) {
           this.$message.error("密码格式错误，不能为空且必须为6-20位长度");
           return false;
@@ -167,8 +167,8 @@ export default {
           return false;
         } else if (
           this.form.password === "" ||
-          psdLength <= 6 ||
-          psdLength >= 20
+          psdLength < 6 ||
+          psdLength > 20
         ) {
           this.$message.error("密码格式错误，不能为空且必须为6-20位长度");
           return false;

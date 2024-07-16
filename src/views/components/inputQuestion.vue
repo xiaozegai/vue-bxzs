@@ -119,7 +119,7 @@ export default {
 		},
 		// 发送提问消息
 		sendMessage() {
-			this.$emit('onSendMessage');
+			this.$emit('onSendMessage', this.message);
 		}
 	}
 };
