@@ -3,10 +3,7 @@
 		<hander-nav></hander-nav>
 		<div class="flex flex-col flex-auto">
 			<!-- 消息框--未开始 -->
-			<div
-				class="pb-2.5 flex flex-col justify-between w-full flex-auto overflow-auto h-0"
-				id="messages-container"
-				v-if="!startChat">
+			<div class="pb-2.5 flex flex-col justify-between w-full flex-auto overflow-auto h-0" id="messages-container" v-if="!startChat">
 				<div class="h-full w-full flex flex-col pt-2 pb-4">
 					<div class="m-auto text-center max-w-md px-2">
 						<div class="flex justify-center mt-8">
@@ -26,21 +23,14 @@
 				</div>
 			</div>
 			<!-- 消息框--开始 -->
-			<div
-				class="pb-2.5 flex flex-col justify-between w-full flex-auto overflow-auto h-0"
-				id="messages-container"
-				v-else>
+			<div class="pb-2.5 flex flex-col justify-between w-full flex-auto overflow-auto h-0" id="messages-container" v-else>
 				<div class="h-full w-full flex flex-col py-4">
 					<div class="pb-10">
 						<div class="w-full" v-for="(item, index) of messageList">
 							<div class="flex flex-col justify-between px-5 mb-3 max-w-3xl mx-auto rounded-lg group">
 								<div class="flex w-full">
 									<div class="mr-4">
-										<img
-											:src="item.avatar"
-											class="max-w-[28px] object-cover rounded-full"
-											alt="profile"
-											draggable="false" />
+										<img :src="item.avatar" class="max-w-[28px] object-cover rounded-full" alt="profile" draggable="false" />
 									</div>
 									<div class="w-full overflow-hidden">
 										<!-- 标题 -->
@@ -76,7 +66,7 @@
 												<pre
 													v-if="item.type === 'question'"
 													id="user-message"
-													style="font-family: 'PingFang SC', serif"
+													style="font-family: 'PingFang SC', serif; word-break: break-all; white-space: pre-wrap"
 													>{{ item.message }}</pre
 												>
 												<template v-if="item.type === 'answer'">
@@ -84,9 +74,7 @@
 													<vue-markdown v-else :source="item.message"></vue-markdown>
 												</template>
 												<!-- 来源-按钮 -->
-												<div
-													v-if="item.type === 'answer' && item.finished && item.sourceList?.length"
-													class="source-box w-full my-2">
+												<div v-if="item.type === 'answer' && item.finished && item.sourceList?.length" class="source-box w-full my-2">
 													<div class="font-bold m-b-1 text-blue-600">答案来源</div>
 													<div class="flex gap-10">
 														<template v-for="(sourceItem, sourceIndex) of item.sourceList">
@@ -138,8 +126,7 @@
 													</div>
 													<template v-if="item.type !== 'question'">
 														<div aria-label="赞" title="赞" class="flex" @click="interact(item, 1)">
-															<button
-																class="invisible group-hover:visible p-1 rounded dark:hover:text-white hover:text-black transition">
+															<button class="invisible group-hover:visible p-1 rounded dark:hover:text-white hover:text-black transition">
 																<svg
 																	stroke="currentColor"
 																	fill="none"
@@ -156,8 +143,7 @@
 															</button>
 														</div>
 														<div aria-label="踩" title="踩" class="flex" @click="interact(item, -1)">
-															<button
-																class="invisible group-hover:visible p-1 rounded dark:hover:text-white hover:text-black transition">
+															<button class="invisible group-hover:visible p-1 rounded dark:hover:text-white hover:text-black transition">
 																<svg
 																	stroke="currentColor"
 																	fill="none"
@@ -343,7 +329,7 @@ export default {
 			if (e.target.value.trim() === '') return (this.message = '');
 			this.message = e.target.value;
 			// 动态改变textarea的高度
-			this.textareaDom.style.height = 'auto';
+			// this.textareaDom.style.height = 'auto';
 			this.textareaDom.style.height = this.textareaDom.scrollHeight + 'px';
 		},
 		sendMessage(msg) {

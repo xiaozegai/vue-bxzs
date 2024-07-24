@@ -1,6 +1,6 @@
 <template>
 	<nav id="nav" class="sticky py-2.5 top-0 justify-center z-30">
-		<div class="logo">LOGO</div>
+		<div class="logo"></div>
 		<div class="settings">
 			<button class="img cursor-pointer flex dark:hover:bg-gray-700 rounded-full transition"></button>
 		</div>
@@ -19,7 +19,7 @@ export default {
 	height: 10vh;
 	padding-left: 15vw;
 	.logo {
-		// background-image: url('../../assets/image/Hollama.svg');
+		background-image: url('../../assets/image/logo-max.png');
 		font-size: 40px;
 		font-weight: 800;
 		position: absolute;
@@ -29,11 +29,12 @@ export default {
 			left: 0;
 		}
 		margin-top: 3vh;
+		width: 400px;
 		height: 3rem;
 		aspect-ratio: 3 / 1;
 		background-repeat: no-repeat;
-		background-position: center;
-		background-size: cover;
+		background-position: left;
+		background-size: contain;
 	}
 	.settings {
 		position: absolute;

@@ -86,9 +86,9 @@
       <div class="footerContainer absolute bottom-2">
         <div class="mt-1.5 text-xs text-gray-500 text-center about">
           Powered by
-          <a href="" target="_blank" class="link underline">xxxxx</a>
+          <a href="" target="_blank" class="link underline">南昌大学</a>
           &amp;
-          <a href="" target="_blank" class="link underline">xxxxx</a>
+          <a href="" target="_blank" class="link underline">南大信息化办</a>
         </div>
       </div>
     </div>

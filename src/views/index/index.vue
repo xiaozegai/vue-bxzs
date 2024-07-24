@@ -5,25 +5,15 @@
 			id="sidebar"
 			class="h-screen max-h-[100dvh] min-h-screen lg:relative text-gray-900 dark:bg-gray-950 dark:text-gray-200 text-sm transform transition fixed z-50 top-0 left-0 w-[20rem]"
 			:class="sidebarOpen ? 'w-[20rem]' : 'w-[0] -translate-x-[20rem]'">
-			<div
-				class="py-2 my-auto flex flex-col justify-between h-screen max-h-[100dvh] w-[20rem]"
-				:class="sidebarOpen ? '' : 'invisible'">
+			<div class="py-2 my-auto flex flex-col justify-between h-screen max-h-[100dvh] w-[20rem]" :class="sidebarOpen ? '' : 'invisible'">
 				<div class="logoContainer">
 					<img
 						src="../../assets/favicon.png"
 						class="rounded-full border-[1px] border-gray-200 dark:border-none logo imgDefault"
 						alt="logo"
 						draggable="false" />
-					<img
-						src="../../assets/image/with.svg"
-						class="dark:border-none with imgDefault"
-						alt="with"
-						draggable="false" />
-					<img
-						src="../../assets/image/logo1.png"
-						alt="logo1"
-						class="rounded-full dark:border-none logo imgDefault"
-						draggable="false" />
+					<img src="../../assets/image/with.svg" class="dark:border-none with imgDefault" alt="with" draggable="false" />
+					<img src="../../assets/image/logo2.png" alt="logo2" class="rounded-full dark:border-none logo imgDefault" draggable="false" />
 				</div>
 				<div class="px-2 flex justify-center space-x-2 newChatContainer">
 					<div
@@ -45,11 +35,7 @@
 							<div class="icon imgDefault"></div>
 						</button>
 						<div class="masksContainer">
-							<button
-								v-for="(item, index) of maskList.slice(0, 3)"
-								:key="index"
-								class="mask"
-								@click="chooseMask(index)">
+							<button v-for="(item, index) of maskList.slice(0, 3)" :key="index" class="mask" @click="chooseMask(index)">
 								<div class="avatar imgDefault" :style="{ 'background-image': `url(${item.avatar})` }"></div>
 								<div class="textInfo">
 									<div class="name">{{ item.name }}</div>
@@ -81,11 +67,7 @@
 						</div>
 					</div>
 					<div id="session-box" class="pl-2 my-2 flex-1 flex flex-col space-y-1 overflow-y-auto">
-						<div
-							class="chatBox pr-2 relative group"
-							v-for="(item, index) of sessionList"
-							:key="index"
-							@click="chooseSession(item, index)">
+						<div class="chatBox pr-2 relative group" v-for="(item, index) of sessionList" :key="index" @click="chooseSession(item, index)">
 							<div class="chatContainer" :class="currentSessionIndex === index ? 'light' : ''">
 								<div class="flex">
 									<div
@@ -113,18 +95,12 @@
 				</div>
 				<div class="user-center px-2.5">
 					<div class="flex flex-col">
-						<button
-							class="flex justify-between rounded-xl py-3 px-3.5 w-full bg-miku-mediumLight_hover dark:hover:bg-gray-900 transition">
+						<button class="flex justify-between rounded-xl py-3 px-3.5 w-full bg-miku-mediumLight_hover dark:hover:bg-gray-900 transition">
 							<div class="self-center mr-3">
-								<img
-									:src="$store.state.user.avatar"
-									class="max-w-[30px] object-cover rounded-full"
-									alt="User profile" />
+								<img :src="$store.state.user.avatar" class="max-w-[30px] object-cover rounded-full" alt="User profile" />
 							</div>
 							<div class="flex-1 self-center text-left font-semibold">{{ $store.state.user.nickname || '用户名' }}</div>
-							<div
-								class="logout mr-3 p-2 self-center font-semibold rounded-xl border-1 border-blue-300 bg-blue-50"
-								@click="logout">
+							<div class="logout mr-3 p-2 self-center font-semibold rounded-xl border-1 border-blue-300 bg-blue-50" @click="logout">
 								退出登录
 							</div>
 						</button>
@@ -178,16 +154,8 @@
 import src1 from '../../assets/image/mask-1.webp';
 import src2 from '../../assets/image/mask-2.webp';
 import src3 from '../../assets/image/mask-3.webp';
-import src4 from '../../assets/image/logo1.png';
-import {
-	user_logout,
-	get_kb_ids,
-	get_chat_list,
-	get_chat_detail,
-	del_chat,
-	answer_rate,
-	get_user_info
-} from '@/api/user';
+import src4 from '../../assets/image/logo2.png';
+import { user_logout, get_kb_ids, get_chat_list, get_chat_detail, del_chat, answer_rate, get_user_info } from '@/api/user';
 import Cookies from 'js-cookie';
 
 export default {
@@ -659,7 +627,7 @@ export default {
 				aspect-ratio: 1 / 1;
 				background-repeat: no-repeat;
 				background-position: center;
-				background-size: cover;
+				background-size: contain;
 			}
 			.name {
 				width: calc(100% - 3.5rem - 8px);
