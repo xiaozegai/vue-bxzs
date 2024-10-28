@@ -5,7 +5,7 @@ import WindiCSS from 'vite-plugin-windicss';
 
 export default defineConfig({
 	plugins: [vue(), WindiCSS()],
-	base: '/baoxiao/',
+	base: '/',
 	resolve: {
 		alias: {
 			'@': fileURLToPath(new URL('./src', import.meta.url))
@@ -24,9 +24,10 @@ export default defineConfig({
 	server: {
 		proxy: {
 			'/api': {
-				target: 'http://39.100.28.20:10001',
+				target: 'http://111.229.0.210:30000/',
         // target: 'http://192.168.1.233:8014',
-				changeOrigin: true
+				changeOrigin: true,
+				pathRewrite: {"^/api": ""}
 			}
 		}
 	}

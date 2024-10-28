@@ -36,4 +36,7 @@ export default {
 	width: 100vw;
 	height: 100vh;
 }
+body {
+    font-family: PingFang SC,serif
+}
 </style>

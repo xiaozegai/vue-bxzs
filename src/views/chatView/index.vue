@@ -36,6 +36,15 @@
 												<span class="invisible group-hover:visible text-gray-400 text-xs font-medium">
 													{{ item.time }}
 												</span>
+												<el-button
+													v-if="item.type === 'answer' && item.finished && item.canCancel"
+													class="ml-3"
+													size="mini"
+													type="warning"
+													plain
+													@click="closeSource(index)">
+													取消回答
+												</el-button>
 											</div>
 										</div>
 										<!-- 占位区 -->
@@ -66,7 +75,7 @@
 													>{{ item.message }}</pre
 												>
 												<template v-if="item.type === 'answer'">
-													<p v-if="!item.message" class="text-gray-700 text-xl">空</p>
+													<p v-if="!item.message" class="text-gray-700 text-xl">暂无回答</p>
 													<vue-markdown v-else :source="item.message"></vue-markdown>
 												</template>
 												<!-- 来源-按钮 -->
@@ -303,7 +312,9 @@ export default {
 			message: '',
 			finishd: true,
 			dialogVisible: false,
-			base64Str: ''
+			base64Str: '',
+			controller: null,
+			hasResObj: false
 		};
 	},
 	mounted() {
@@ -375,7 +386,8 @@ export default {
 				name: '报销助手',
 				message: '',
 				time: new Date().toLocaleString(),
-				finished: false
+				finished: false,
+				canCancel: true
 			};
 			this.$emit('onAddMessage', newMessage);
 			this.sendMessageApi(question, this.messageList.length - 1);
@@ -383,6 +395,7 @@ export default {
 		sendMessageApi(question, index) {
 			// 让messagesContainer滚动到最下面
 			this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+			this.hasResObj = false;
 			let { kb_ids, history, session_id } = this.getApiParams(),
 				_that = this;
 			let data = {
@@ -390,8 +403,11 @@ export default {
 				kb_ids,
 				history
 			};
+			this.controller = new AbortController();
+			const signal = this.controller.signal;
 			fetchEventSource(`/api/chat/${session_id}`, {
 				method: 'POST',
+				signal: signal,
 				headers: {
 					'Authori-zation': 'Bearer ' + localStorage.getItem('accessToken')
 				},
@@ -405,20 +421,24 @@ export default {
 						throw new Error('连接失败');
 					}
 				},
-				onmessage(e) {
+				async onmessage(e) {
 					if (e.event === 'message') {
-						_that.messageList[index].message += JSON.parse(e.data.replace(/\\n\\n/gm, '<br>')).response;
-						// _that.messageList[index].message += JSON.parse(e.data).response;
+						_that.messageList[index].message += JSON.parse(e.data).response.replace(/\\n\\n/gm, '<br>');
+						if (JSON.parse(e.data) && !_that.hasResObj) {
+							_that.hasResObj = true;
+							_that.$emit('updateResponseObj', JSON.parse(e.data).data);
+						}
 					} else if (e.event === 'close') {
 						_that.$emit('updateResponseObj', JSON.parse(e.data));
 					} else {
 						// console.log('其他data', e.data);
 					}
-					// 让messagesContainer滚动到最下面
-					_that.messagesContainer.scrollTop = _that.messagesContainer.scrollHeight;
 				},
 				async onclose(e) {
 					_that.finishd = true; // 重置状态
+					_that.$emit('updateMessageCancel', index);
+					// 让messagesContainer滚动到最下面
+					_that.messagesContainer.scrollTop = _that.messagesContainer.scrollHeight;
 					let obj = {
 						answer: _that.messageList[index].message,
 						content_id: _that.responseObj.content_id,
@@ -432,6 +452,16 @@ export default {
 					throw err;
 				}
 			});
+		},
+		async closeSource(index) {
+			this.finishd = true;
+			this.controller.abort();
+			this.$emit('updateMessageCancel', index);
+			let obj = {
+				answer: this.messageList[index].message,
+				content_id: this.responseObj.content_id
+			};
+			const { data } = await upload_answer(obj);
 		},
 		// 获取历史消息等参数
 		getApiParams() {

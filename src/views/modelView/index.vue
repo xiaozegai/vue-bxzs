@@ -40,6 +40,15 @@
 												<span class="invisible group-hover:visible text-gray-400 text-xs font-medium">
 													{{ item.time }}
 												</span>
+												<el-button
+													v-if="item.type === 'answer' && item.finished && item.canCancel"
+													class="ml-3"
+													size="mini"
+													type="warning"
+													plain
+													@click="closeSource(index)">
+													取消回答
+												</el-button>
 											</div>
 										</div>
 										<!-- 占位区 -->
@@ -70,7 +79,7 @@
 													>{{ item.message }}</pre
 												>
 												<template v-if="item.type === 'answer'">
-													<p v-if="!item.message" class="text-gray-700 text-xl">空</p>
+													<p v-if="!item.message" class="text-gray-700 text-xl">暂无回答</p>
 													<vue-markdown v-else :source="item.message"></vue-markdown>
 												</template>
 												<!-- 来源-按钮 -->
@@ -80,7 +89,7 @@
 														<template v-for="(sourceItem, sourceIndex) of item.sourceList">
 															<el-tooltip effect="light" :content="sourceItem.content || '无'" placement="top">
 																<div class="source px-4 py-1 border-2 rounded-lg cursor-pointer hover:underline">
-																	<el-link>{{ sourceItem.file_name }}</el-link>
+																	<el-link @click="clickSource(sourceItem)">{{ sourceItem.file_name }}</el-link>
 																</div>
 															</el-tooltip>
 														</template>
@@ -255,6 +264,11 @@
 					@onHandlekeydown="handlekeydown"
 					@onSendMessage="sendMessage"></input-question>
 			</div>
+			<el-dialog title="预览图片" :visible.sync="dialogVisible" :show-close="false" :center="true" width="30%" @closed="handelClosed">
+				<el-image v-if="base64Str" style="margin: 0 auto" :src="base64Str" :preview-src-list="[base64Str]"></el-image>
+				<i v-else class="icon el-icon-loading"></i>
+				<div class="img-tip">点击图片可全屏预览！</div>
+			</el-dialog>
 		</div>
 	</div>
 </template>
@@ -262,7 +276,7 @@
 <script>
 import { images } from '@/utils/constans.js';
 import { EventStreamContentType, fetchEventSource } from '@microsoft/fetch-event-source';
-import { upload_answer } from '@/api/user';
+import { upload_answer, get_file } from '@/api/user';
 import VueMarkdown from 'vue-markdown';
 import handerNav from '../components/handerNav.vue';
 import inputQuestion from '../components/inputQuestion.vue';
@@ -314,7 +328,11 @@ export default {
 					title: '帮助我进行学习',
 					description: '大学入学考试的词汇'
 				}
-			]
+			],
+			dialogVisible: false,
+			base64Str: '',
+			controller: null,
+			hasResObj: false
 		};
 	},
 	created() {},
@@ -391,7 +409,8 @@ export default {
 				name: this.getTitile(),
 				message: '',
 				time: new Date().toLocaleString(),
-				finished: false
+				finished: false,
+				canCancel: true
 			};
 			this.$emit('onAddMessage', newMessage);
 			this.sendMessageApi(question, this.messageList.length - 1);
@@ -399,6 +418,7 @@ export default {
 		sendMessageApi(question, index) {
 			// 让messagesContainer滚动到最下面
 			this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+			this.hasResObj = false;
 			let { kb_ids, history, session_id } = this.getApiParams(),
 				_that = this;
 			let data = {
@@ -406,8 +426,11 @@ export default {
 				kb_ids,
 				history
 			};
+			this.controller = new AbortController();
+			const signal = this.controller.signal;
 			fetchEventSource(`/api/chat/${session_id}`, {
 				method: 'POST',
+				signal: signal,
 				headers: {
 					'Authori-zation': 'Bearer ' + localStorage.getItem('accessToken')
 				},
@@ -424,20 +447,23 @@ export default {
 				},
 				onmessage(e) {
 					if (e.event === 'message') {
-						_that.messageList[index].message += JSON.parse(e.data.replace(/\\n\\n/gm, '<br>')).response;
-						// _that.messageList[index].message += JSON.parse(e.data).response;
+						_that.messageList[index].message += JSON.parse(e.data).response.replace(/\\n\\n/gm, '<br>');
+						if (JSON.parse(e.data) && !_that.hasResObj) {
+							_that.hasResObj = true;
+							_that.$emit('updateResponseObj', JSON.parse(e.data).data);
+						}
 					} else if (e.event === 'close') {
 						// console.log(JSON.parse(e.data));
 						_that.$emit('updateResponseObj', JSON.parse(e.data));
 					} else {
 						console.log('其他data', e.data);
 					}
-					// 让messagesContainer滚动到最下面
-					_that.messagesContainer.scrollTop = _that.messagesContainer.scrollHeight;
 				},
 				async onclose(e) {
-					console.log('关闭', _that.responseObj);
 					_that.finishd = true; // 重置状态
+					_that.$emit('updateMessageCancel', index);
+					// 让messagesContainer滚动到最下面
+					_that.messagesContainer.scrollTop = _that.messagesContainer.scrollHeight;
 					let obj = {
 						answer: _that.messageList[index].message,
 						content_id: _that.responseObj.content_id,
@@ -452,6 +478,16 @@ export default {
 					throw err;
 				}
 			});
+		},
+		async closeSource(index) {
+			this.finishd = true;
+			this.controller.abort();
+			this.$emit('updateMessageCancel', index);
+			let obj = {
+				answer: this.messageList[index].message,
+				content_id: this.responseObj.content_id
+			};
+			const { data } = await upload_answer(obj);
 		},
 		// 获取历史消息等参数
 		getApiParams() {
@@ -493,6 +529,33 @@ export default {
 		interact(item, is_like) {
 			// 在messageList找出下标
 			this.$emit('onInteract', { item, is_like });
+		},
+		async clickSource(item) {
+			let base64Src = this.getBase64Prefix(item.file_name);
+			if (!base64Src) return;
+			this.dialogVisible = true;
+			const { data } = await get_file(item.file_id);
+			if (data.status === 200) {
+				this.base64Str = base64Src + data.data.base64_content;
+			} else {
+				this.$message.error('获取图片失败');
+				setTimeout(() => {
+					this.dialogVisible = false;
+				}, 2000);
+			}
+		},
+		// 获取base64前缀
+		getBase64Prefix(fileName) {
+			const filetypeList = ['png', 'jpg'];
+			const filetype = fileName.split('.')[1];
+			if (filetypeList.includes(filetype)) {
+				return filetype !== 'jpg' ? `data:image/${filetype};base64,` : 'data:image/jpeg;base64,';
+			} else {
+				return '';
+			}
+		},
+		handelClosed() {
+			this.base64Str = '';
 		}
 	}
 };

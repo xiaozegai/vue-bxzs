@@ -141,7 +141,8 @@
 			@onAddMessage="onAddMessage"
 			:responseObj="responseObj"
 			@updateResponseObj="updateResponseObj"
-			@onInteract="onInteract" />
+			@onInteract="onInteract"
+			@updateMessageCancel="updateMessageCancel" />
 		<!-- 关闭 - 开启 -->
 		<div id="tippy-6" :class="{ tippyVisible: sidebarToggle, tippyMove: !sidebarOpen }">
 			<div class="tippy-box">
@@ -300,6 +301,7 @@ export default {
 			}
 		},
 		chooseMask(index, isRouter) {
+			this.resetSessionIndex();
 			this.resetValue();
 			this.maskIndex = index;
 			if (isRouter || this.$route.path !== '/') {
@@ -314,8 +316,13 @@ export default {
 			this.$router.push({ path: '/collection' });
 		},
 		newChat() {
+			this.resetSessionIndex();
 			this.resetValue();
 			this.$router.push({ path: `/chat` });
+		},
+		resetSessionIndex() {
+			this.currentSessionIndex = -1;
+			localStorage.setItem('currentSessionIndex', 0);
 		},
 		setDocumentTitle(title) {
 			document.title = `"${title}"` + ' | ' + '南大-报销助手';
@@ -393,6 +400,11 @@ export default {
 				this.$set(this.sessionList[0], 'id', obj.session_id);
 				this.$set(this.sessionList[0], 'kb_type', obj.kb_type);
 			} catch {}
+		},
+		updateMessageCancel(index) {
+			this.$set(this.messageList[index], 'canCancel', false);
+			this.$set(this.sessionList[0], 'id', this.responseObj.session_id);
+			this.$set(this.sessionList[0], 'kb_type', this.responseObj.kb_type);
 		},
 		// 删除会话
 		async deleteSession(item) {
