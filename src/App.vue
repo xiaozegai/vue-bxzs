@@ -6,6 +6,7 @@
 
 <script>
 import { get_user_info } from '@/api/user';
+
 export default {
 	name: 'App',
 	components: {},

@@ -41,12 +41,12 @@ export default {
 		return {
 			tipList: [
 				{
-					title: '科研经费报销流程',
-					description: '科研经费报销'
+					title: '我是教授，去西安出差，报销标准如何',
+					description: '我是教授，去西安出差，报销标准如何？'
 				},
 				{
-					title: '如何报销经费',
-					description: '如何报销？？'
+					title: '如何报销论文版面费？',
+					description: '如何报销论文版面费？'
 				}
 			]
 		};

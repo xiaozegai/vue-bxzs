@@ -66,20 +66,24 @@
 											</div>
 										</div>
 										<!-- 回答内容 -->
-										<div v-else class="prose chat-user w-full max-w-full whitespace-pre-line">
+										<div v-else class="prose chat-user w-full max-w-full ">
 											<div class="w-full py-2">
 												<pre
 													v-if="item.type === 'question'"
 													id="user-message"
-													style="font-family: 'PingFang SC', serif; word-break: break-all; white-space: pre-wrap"
+													style="font-family: Arial, Helvetica, sans-serif; word-break: break-all; white-space: pre-wrap"
 													>{{ item.message }}</pre
 												>
-												<template v-if="item.type === 'answer'">
+												<!-- <template v-if="item.type === 'answer'">
 													<p v-if="!item.message" class="text-gray-700 text-xl">暂无回答</p>
 													<vue-markdown v-else :source="item.message"></vue-markdown>
-												</template>
+												</template> -->
+												<!-- <vue-markdown style="font-family: Arial, Helvetica, sans-serif;" :source="item.message" :plugins="plugins" :breaks="false" :typographer="true" :linkify="true" :highlight="true"></vue-markdown> -->
+												<HighLightMarkDown
+													:content="item.message ? item.message : ''"
+													/>
 												<!-- 来源-按钮 -->
-												<div v-if="item.type === 'answer' && item.finished && item.sourceList?.length" class="source-box w-full my-2">
+												<!-- <div v-if="item.type === 'answer' && item.finished && item.sourceList?.length" class="source-box w-full my-2">
 													<div class="font-bold m-b-1 text-blue-600">答案来源</div>
 													<div class="flex gap-10">
 														<template v-for="(sourceItem, sourceIndex) of item.sourceList">
@@ -90,7 +94,7 @@
 															</el-tooltip>
 														</template>
 													</div>
-												</div>
+												</div> -->
 												<!-- 复制-按钮 -->
 												<div class="flex justify-start space-x-1 text-gray-700 dark:text-gray-500">
 													<!-- <div aria-label="编辑" class="flex">
@@ -276,6 +280,12 @@ import { images } from '@/utils/constans.js';
 import { EventStreamContentType, fetchEventSource } from '@microsoft/fetch-event-source';
 import { upload_answer, get_file } from '@/api/user';
 import VueMarkdown from 'vue-markdown';
+import markdownItAnchor from 'markdown-it-anchor';
+import markdownItToc from 'markdown-it-table-of-contents';
+import markdownItEmoji from 'markdown-it-emoji';
+import markdownItKatex from 'markdown-it-katex';
+import HighLightMarkDown from '../components/HightLightMarkdown.vue';
+import MarkdownIt from 'markdown-it'
 import handerNav from '../components/handerNav.vue';
 import questionPrompt from '../components/questionPrompt.vue';
 import inputQuestion from '../components/inputQuestion.vue';
@@ -285,7 +295,8 @@ export default {
 		handerNav,
 		'vue-markdown': VueMarkdown,
 		questionPrompt,
-		inputQuestion
+		inputQuestion,
+		HighLightMarkDown,
 	},
 	props: {
 		maskList: {
@@ -303,7 +314,14 @@ export default {
 		responseObj: {
 			type: Object,
 			default: () => {}
-		}
+		},
+		plugins: [
+        markdownItAnchor,
+        [markdownItToc, { includeLevel: [2, 3] }],
+        markdownItEmoji,
+        markdownItKatex
+      ]
+
 	},
 	data() {
 		return {
@@ -314,7 +332,13 @@ export default {
 			dialogVisible: false,
 			base64Str: '',
 			controller: null,
-			hasResObj: false
+			hasResObj: false,
+			markdownRender:new MarkdownIt({
+				html:true,
+				linkify: true,
+				typographer: true
+			})
+
 		};
 	},
 	mounted() {
@@ -323,6 +347,10 @@ export default {
 	},
 	computed: {},
 	methods: {
+		renderMdText(text){
+			//生成html
+			return this.markdownRender.render(text)
+    	},
 		handleInput(e) {
 			// 判断e.target.value是否为空，为空则不赋值给messages
 			if (e.target.value.trim() === '') return (this.message = '');
